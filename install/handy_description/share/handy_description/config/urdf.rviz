@@ -1,0 +1,38 @@
+Panels:
+  - Class: rviz_visual_tools/RvizVisualToolsGui
+    Name: RvizVisualToolsGui
+    Enabled: true
+Visualization Manager:
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Plane: XY
+      Cell Count: 10
+      Normal Cell Count: 0
+      Line Style:
+        Value: Lines
+        Line Width: 0.03
+      Color: 160; 160; 164
+      Alpha: 0.5
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel
+      Enabled: true
+      Robot Description: robot_description
+      Visual Enabled: true
+      Collision Enabled: false
+      Update Interval: 0
+  Global Options:
+    Fixed Frame: base_link
+    Background Color: 48; 48; 48
+    Frame Rate: 30
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 1.5
+      Pitch: 0.7
+      Yaw: 0.7
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0

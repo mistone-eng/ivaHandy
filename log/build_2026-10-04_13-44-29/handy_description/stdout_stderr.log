@@ -1,0 +1,61 @@
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 1.3.12 (/opt/ros/humble/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+-- Found xacro: 2.0.13 (/opt/ros/humble/share/xacro/cmake)
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/owenc/handy_ws/src/ivaHandy/build/handy_description
+[36mInstall the project...[0m
+-- Install configuration: ""
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/launch
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/launch/robot_state_pub.launch.py
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/launch/display.launch.py
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/launch/display.launch
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/launch/__pycache__
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/launch/__pycache__/display.launch.cpython-310.pyc
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/launch/gazebo.launch
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/launch/robot_state_pub.launch
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/urdf
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/urdf/handy_description_position_control.urdf.xacro
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/urdf/handy_description.urdf.xacro
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/meshes
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/meshes/link_3.STL
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/meshes/link_8.STL
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/meshes/base_link.STL
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/meshes/link_5.STL
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/meshes/link_9.STL
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/meshes/link_10.STL
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/meshes/link_2.STL
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/meshes/link_4.STL
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/meshes/link_6.STL
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/meshes/link_7.STL
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/config
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/config/urdf.rviz
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/config/joint_names_handy_description.yaml
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/lib/handy_description/publish_robot_description.py
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/ament_index/resource_index/package_run_dependencies/handy_description
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/ament_index/resource_index/parent_prefix_path/handy_description
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/environment/ament_prefix_path.sh
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/environment/ament_prefix_path.dsv
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/environment/path.sh
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/environment/path.dsv
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/local_setup.bash
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/local_setup.sh
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/local_setup.zsh
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/local_setup.dsv
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/package.dsv
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/ament_index/resource_index/packages/handy_description
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/cmake/handy_descriptionConfig.cmake
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/cmake/handy_descriptionConfig-version.cmake
+-- Installing: /home/owenc/handy_ws/src/ivaHandy/install/handy_description/share/handy_description/package.xml
