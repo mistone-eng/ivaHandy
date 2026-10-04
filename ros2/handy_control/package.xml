@@ -1,23 +1,20 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>handy_description</name>
+  <name>handy_control</name>
   <version>0.1.0</version>
-  <description>ROS 2 URDF and robot description for the Handy arm</description>
+  <description>ROS 2 control package for the Handy arm in disconnected/mock mode</description>
   <maintainer email="opconnell@gmail.com">owenc</maintainer>
   <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>xacro</depend>
-  <depend>robot_state_publisher</depend>
-  <depend>joint_state_publisher</depend>
-  <depend>joint_state_publisher_gui</depend>
-  <depend>rviz2</depend>
-  <depend>urdf</depend>
-
-  <exec_depend>rclpy</exec_depend>
-  <exec_depend>std_msgs</exec_depend>
+  <depend>rclcpp</depend>
+  <depend>controller_manager</depend>
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>ros2_control</depend>
+  <depend>std_msgs</depend>
 
   <exec_depend>ros2launch</exec_depend>
 
