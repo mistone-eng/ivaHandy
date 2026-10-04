@@ -22,9 +22,13 @@ def generate_launch_description():
     use_gui = LaunchConfiguration('gui')
     xacro_cmd = Command([FindExecutable(name='xacro'), ' ', urdf_path])
 
-    publish_description = Node(
-        package='handy_description',
-        executable='publish_robot_description.py',
+    # ros2_control controller manager (mock/hardware-less use)
+    controller_config = os.path.join(get_package_share_directory('handy_control'), 'config', 'handy_controllers.yaml')
+
+    controller_manager = Node(
+        package='controller_manager',
+        executable='ros2_control_node',
+        parameters=[{'robot_description': xacro_cmd}, controller_config],
         output='screen'
     )
 
@@ -59,9 +63,31 @@ def generate_launch_description():
         output='screen'
     )
 
+    # spawn controllers after controller_manager starts
+    from launch.actions import RegisterEventHandler
+    from launch.event_handlers import OnProcessStart
+    from launch_ros.actions import Node as ROSNode
+
+    spawner_joint_state = ROSNode(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['joint_state_broadcaster'],
+        output='screen'
+    )
+
+    spawner_trajectory = ROSNode(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['joint_trajectory_controller'],
+        output='screen'
+    )
+
     return LaunchDescription([
-        publish_description,
         gui_arg,
+        controller_manager,
+        RegisterEventHandler(
+            OnProcessStart(target_action=controller_manager, on_start=[spawner_joint_state, spawner_trajectory])
+        ),
         joint_state_publisher,
         joint_state_publisher_gui,
         robot_state_publisher,
