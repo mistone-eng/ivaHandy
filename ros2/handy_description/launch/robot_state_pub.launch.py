@@ -19,13 +19,8 @@ def generate_launch_description():
             output='screen'
         ),
         Node(
-            package='joint_state_publisher_gui',
-            executable='joint_state_publisher_gui',
-            output='screen'
-        ),
-        Node(
-            package='rviz2',
-            executable='rviz2',
+            package='joint_state_publisher',
+            executable='joint_state_publisher',
             output='screen'
         ),
     ])
