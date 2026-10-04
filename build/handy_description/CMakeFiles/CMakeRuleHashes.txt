@@ -1,2 +1,0 @@
-# Hashes of file build rules.
-717a76d8ea2df31b3b404641a499adef CMakeFiles/handy_description_uninstall

@@ -1,4 +1,6 @@
 *~
 .vscode/
 frames_*.pdf
-frames_*.gv
+frames_*.gvbuild/
+install/
+log/
