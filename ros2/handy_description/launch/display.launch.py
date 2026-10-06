@@ -10,6 +10,7 @@ def generate_launch_description():
     pkg_share = get_package_share_directory('handy_description')
     urdf_path = os.path.join(pkg_share, 'urdf', 'handy_description.urdf.xacro')
     robot_description = Command([FindExecutable(name='xacro'), ' ', urdf_path])
+    rviz_config = os.path.join(pkg_share, 'config', 'urdf.rviz')
 
     return LaunchDescription([
         Node(
@@ -26,6 +27,7 @@ def generate_launch_description():
         Node(
             package='rviz2',
             executable='rviz2',
+            arguments=['-d', rviz_config],
             output='screen'
         ),
     ])
