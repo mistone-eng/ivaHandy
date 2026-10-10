@@ -83,10 +83,10 @@
       <mass value="0.471538287399183" />
       <inertia
         ixx="0.00096626194"
-        ixy="-0.00000006431"
-        ixz="0.00000032990"
+        ixy="0.00000000000"
+        ixz="0.00000000000"
         iyy="0.00575735994"
-        iyz="-0.00039309867"
+        iyz="0.00000000000"
         izz="0.00066079574"
       />
     </inertial>
@@ -123,10 +123,10 @@
       <mass value="0.176545926561924" />
       <inertia
         ixx="0.00067487030"
-        ixy="-0.00005184685"
-        ixz="-0.00000255096"
+        ixy="0.00000000000"
+        ixz="0.00000000000"
         iyy="0.00024791507"
-        iyz="0.00002448920"
+        iyz="0.00000000000"
         izz="0.000052259169"
       />
     </inertial>
@@ -424,6 +424,7 @@
     </collision>
   </link>
   <joint name="joint_9" type="revolute">
+    <mimic joint="joint_8" multiplier="-1.0" offset="0.0" />
     <origin xyz="0.0186 0 -0.056505" rpy="1.5708 1.5708 0" />
     <parent link="link_8" />
     <child link="link_10" />
@@ -499,7 +500,7 @@
     <xacro:transmission name="tran6" joint="joint_6" actuator="motor_6" />
     <xacro:transmission name="tran7" joint="joint_7" actuator="motor_7" />
     <xacro:transmission name="tran8" joint="joint_8" actuator="motor_8" />
-    <xacro:transmission name="tran9" joint="joint_9" actuator="motor_9" />
+    <!-- <xacro:transmission name="tran9" joint="joint_9" actuator="motor_9" /> -->
   </xacro:if>
 
   <ros2_control name="HandySystem" type="system">
@@ -548,7 +549,6 @@
       <state_interface name="velocity"/>
     </joint>
     <joint name="joint_9">
-      <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
     </joint>

@@ -7,7 +7,7 @@ moveit_setup_assistant_config:
   package_settings:
     author_name: Owen Connell
     author_email: oconnell7@gatech.edu
-    generated_timestamp: 1791330320
+    generated_timestamp: 1791659793
   control_xacro:
     command:
       - position
