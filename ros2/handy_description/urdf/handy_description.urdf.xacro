@@ -83,10 +83,10 @@
       <mass value="0.471538287399183" />
       <inertia
         ixx="0.00096626194"
-        ixy="0.00000000000"
-        ixz="0.00000000000"
+        ixy="-0.00000006431"
+        ixz="0.00000032990"
         iyy="0.00575735994"
-        iyz="0.00000000000"
+        iyz="-0.00039309867"
         izz="0.00066079574"
       />
     </inertial>
@@ -123,10 +123,10 @@
       <mass value="0.176545926561924" />
       <inertia
         ixx="0.00067487030"
-        ixy="0.00000000000"
-        ixz="0.00000000000"
+        ixy="-0.00005184685"
+        ixz="-0.00000255096"
         iyy="0.00024791507"
-        iyz="0.00000000000"
+        iyz="0.00002448920"
         izz="0.000052259169"
       />
     </inertial>
@@ -500,13 +500,95 @@
     <xacro:transmission name="tran6" joint="joint_6" actuator="motor_6" />
     <xacro:transmission name="tran7" joint="joint_7" actuator="motor_7" />
     <xacro:transmission name="tran8" joint="joint_8" actuator="motor_8" />
-    <!-- <xacro:transmission name="tran9" joint="joint_9" actuator="motor_9" /> -->
+    <xacro:transmission name="tran9" joint="joint_9" actuator="motor_9" /> <!-- consider removing -->
   </xacro:if>
 
   <ros2_control name="HandySystem" type="system">
     <hardware>
-      <plugin>mock_components/GenericSystem</plugin>
+      <plugin>dynamixel_hardware_interface/DynamixelHardware</plugin>
+      <param name="port_name">/dev/ttyUSB0</param>
+      <param name="baud_rate">1000000</param>
+      <param name="number_of_joints">9</param>
+      <param name="number_of_transmissions">0</param>
+      <param name="dynamixel_model_folder">/param/dxl_model</param>
+      <param name="disable_torque_at_init">false</param>
+      <param name="protocol_version">1.0</param>
+      <param name="ids">1, 2, 3, 4, 5, 6, 7, 8, 9</param>
+      <param name="joint_names">joint_1, joint_2, joint_3, joint_4, joint_5, joint_6, joint_7, joint_8, joint_9</param>
     </hardware>
+
+    <gpio name="dxl1">
+      <param name="type">dxl</param>
+      <param name="ID">1</param>
+      <command_interface name="Goal Position"/>
+      <state_interface name="Present Position"/>
+      <state_interface name="Present Velocity"/>
+      <state_interface name="Present Current"/>
+    </gpio>
+    <gpio name="dxl2">
+      <param name="type">dxl</param>
+      <param name="ID">2</param>
+      <command_interface name="Goal Position"/>
+      <state_interface name="Present Position"/>
+      <state_interface name="Present Velocity"/>
+      <state_interface name="Present Current"/>
+    </gpio>
+    <gpio name="dxl3">
+      <param name="type">dxl</param>
+      <param name="ID">3</param>
+      <command_interface name="Goal Position"/>
+      <state_interface name="Present Position"/>
+      <state_interface name="Present Velocity"/>
+      <state_interface name="Present Current"/>
+    </gpio>
+    <gpio name="dxl4">
+      <param name="type">dxl</param>
+      <param name="ID">4</param>
+      <command_interface name="Goal Position"/>
+      <state_interface name="Present Position"/>
+      <state_interface name="Present Velocity"/>
+      <state_interface name="Present Current"/>
+    </gpio>
+    <gpio name="dxl5">
+      <param name="type">dxl</param>
+      <param name="ID">5</param>
+      <command_interface name="Goal Position"/>
+      <state_interface name="Present Position"/>
+      <state_interface name="Present Velocity"/>
+      <state_interface name="Present Current"/>
+    </gpio>
+    <gpio name="dxl6">
+      <param name="type">dxl</param>
+      <param name="ID">6</param>
+      <command_interface name="Goal Position"/>
+      <state_interface name="Present Position"/>
+      <state_interface name="Present Velocity"/>
+      <state_interface name="Present Current"/>
+    </gpio>
+    <gpio name="dxl7">
+      <param name="type">dxl</param>
+      <param name="ID">7</param>
+      <command_interface name="Goal Position"/>
+      <state_interface name="Present Position"/>
+      <state_interface name="Present Velocity"/>
+      <state_interface name="Present Current"/>
+    </gpio>
+    <gpio name="dxl8">
+      <param name="type">dxl</param>
+      <param name="ID">8</param>
+      <command_interface name="Goal Position"/>
+      <state_interface name="Present Position"/>
+      <state_interface name="Present Velocity"/>
+      <state_interface name="Present Current"/>
+    </gpio>
+    <gpio name="dxl9">
+      <param name="type">dxl</param>
+      <param name="ID">9</param>
+      <command_interface name="Goal Position"/>
+      <state_interface name="Present Position"/>
+      <state_interface name="Present Velocity"/>
+      <state_interface name="Present Current"/>
+    </gpio>
 
     <joint name="joint_1">
       <command_interface name="position"/>
@@ -549,6 +631,7 @@
       <state_interface name="velocity"/>
     </joint>
     <joint name="joint_9">
+      <command_interface name="position"/>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
     </joint>
