@@ -1,14 +1,15 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="handy_description">
     <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
+    <xacro:arg name="use_mock" default="true" />
 
-    <!-- Import handy_description urdf file -->
+    <!-- must come BEFORE the include: xacro keeps the first definition of an arg -->
+    <xacro:arg name="description_ros2_control" default="false" />
     <xacro:include filename="$(find handy_description)/urdf/handy_description.urdf.xacro" />
 
-    <!-- Import control_xacro -->
     <xacro:include filename="handy_description.ros2_control.xacro" />
 
-
-    <xacro:handy_description_ros2_control name="FakeSystem" initial_positions_file="$(arg initial_positions_file)"/>
-
+    <xacro:handy_description_ros2_control name="HandySystem"
+        initial_positions_file="$(arg initial_positions_file)"
+        use_mock="$(arg use_mock)"/>
 </robot>

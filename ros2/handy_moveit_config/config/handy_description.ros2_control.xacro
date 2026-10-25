@@ -1,110 +1,65 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:macro name="handy_description_ros2_control" params="name initial_positions_file">
-        <xacro:property name="initial_positions" value="${load_yaml(initial_positions_file)['initial_positions']}"/>
+
+    <!-- One Dynamixel (Protocol 1.0) joint. model: AX, RX, EX or MX. init only used by mock. -->
+    <xacro:macro name="dxl_joint" params="name id model sign:=1 offset_ticks:=0 init:=0.0">
+        <joint name="${name}">
+            <param name="id">${id}</param>
+            <param name="model">${model}</param>
+            <param name="sign">${sign}</param>
+            <param name="offset_ticks">${offset_ticks}</param>
+            <command_interface name="position"/>
+            <state_interface name="position">
+              <param name="initial_value">${init}</param>
+            </state_interface>
+            <state_interface name="velocity"/>
+        </joint>
+    </xacro:macro>
+
+    <!-- A servo that mirrors another joint (state only; goal = leader_cmd * multiplier). -->
+    <xacro:macro name="dxl_follower_joint" params="name id model follows multiplier:=1 sign:=1 offset_ticks:=0">
+        <joint name="${name}">
+            <param name="id">${id}</param>
+            <param name="model">${model}</param>
+            <param name="sign">${sign}</param>
+            <param name="offset_ticks">${offset_ticks}</param>
+            <param name="follows">${follows}</param>
+            <param name="follow_multiplier">${multiplier}</param>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+    </xacro:macro>
+
+    <xacro:macro name="handy_description_ros2_control" params="name initial_positions_file use_mock:=true">
+        <xacro:property name="initial_positions" value="${xacro.load_yaml(initial_positions_file)['initial_positions']}"/>
 
         <ros2_control name="${name}" type="system">
-            <!-- May change later
-            <param name="dynamixel_state_pub_msg_name">dynamixel_hardware_interface/dxl_state</param>
-            <param name="get_dynamixel_data_srv_name">dynamixel_hardware_interface/get_dxl_data</param>
-            <param name="set_dynamixel_data_srv_name">dynamixel_hardware_interface/set_dxl_data</param>
-            <param name="reboot_dxl_srv_name">dynamixel_hardware_interface/reboot_dxl</param>
-            <param name="set_dxl_torque_srv_name">dynamixel_hardware_interface/set_dxl_torque</param>
-            -->
-
             <hardware>
-                <plugin>dynamixel_hardware_interface/DynamixelHardware</plugin>
-                <param name="port_name">/dev/ttyUSB0</param>
-                <param name="baud_rate">1000000</param>
-                <param name="number_of_joints">9</param>
-                <param name="number_of_transmissions">0</param>
-                <param name="dynamixel_model_folder">/param/dxl_model</param>
-                <param name="disable_torque_at_init">false</param>
-                <param name="protocol_version">1.0</param>
-                <param name="ids">1, 2, 3, 4, 5, 6, 7, 8, 9</param>
-                <param name="joint_names">joint_1, joint_2, joint_3, joint_4, joint_5, joint_6, joint_7, joint_8, joint_9</param>
+                <xacro:if value="${use_mock}">
+                    <plugin>mock_components/GenericSystem</plugin>
+                </xacro:if>
+                <xacro:unless value="${use_mock}">
+                    <plugin>dynamixel_handy_interface/DynamixelHandyInterface</plugin>
+                    <param name="port">/dev/ttyUSB0</param>
+                    <param name="baud">1000000</param>
+                    <param name="moving_speed">50</param> <!-- Originally 100 -->
+                    <param name="torque_limit">200</param> <!-- Originally 512 -->
+                </xacro:unless>
             </hardware>
-            <joint name="joint_1">
-                <param name="id">1</param>
-                <param name="motor_type">ex_106</param>
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['joint_1']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-            </joint>
-            <joint name="joint_2">
-                <param name="id">2</param>
-                <param name="motor_type">mx_106</param>
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['joint_2']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-            </joint>
-            <joint name="joint_3">
-                <param name="id">3</param>
-                <param name="motor_type">ex_106</param>
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['joint_3']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-            </joint>
-            <joint name="joint_4">
-                <param name="id">4</param>
-                <param name="motor_type">ex_106</param>
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['joint_4']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-            </joint>
-            <joint name="joint_5">
-                <param name="id">5</param>
-                <param name="motor_type">mx_28</param>
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['joint_5']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-            </joint>
-            <joint name="joint_6">
-                <param name="id">6</param>
-                <param name="motor_type">mx_28</param>
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['joint_6']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-            </joint>
-            <joint name="joint_7">
-                <param name="id">7</param>
-                <param name="motor_type">mx_28</param>
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['joint_7']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-            </joint>
-            <joint name="joint_8">
-                <param name="id">8</param>
-                <param name="motor_type">ax_12a</param>
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['joint_8']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-            </joint>
-            <joint name="joint_9">
-                <param name="id">9</param>
-                <param name="motor_type">ax_12a</param>
-                <command_interface name="position"/>
-                <state_interface name="position">
-                  <param name="initial_value">${initial_positions['joint_9']}</param>
-                </state_interface>
-                <state_interface name="velocity"/>
-            </joint>
+
+            <xacro:dxl_joint name="joint_1" id="1" model="EX" init="${initial_positions['joint_1']}"/>
+            <xacro:dxl_joint name="joint_2" id="2" model="MX" init="${initial_positions['joint_2']}"/>
+            <xacro:dxl_joint name="joint_3" id="3" model="EX" init="${initial_positions['joint_3']}"/>
+            <xacro:dxl_joint name="joint_4" id="4" model="EX" init="${initial_positions['joint_4']}"/>
+            <xacro:dxl_joint name="joint_5" id="5" model="MX" init="${initial_positions['joint_5']}"/>
+            <xacro:dxl_joint name="joint_6" id="6" model="MX" init="${initial_positions['joint_6']}"/>
+            <xacro:dxl_joint name="joint_7" id="7" model="MX" init="${initial_positions['joint_7']}"/>
+            <xacro:dxl_joint name="joint_8" id="8" model="AX" init="${initial_positions['joint_8']}"/>
+
+            <!-- Second finger: real hardware only. In mock mode the URDF <mimic> drives it. -->
+            <xacro:unless value="${use_mock}">
+                <xacro:dxl_follower_joint name="joint_9" id="9" model="AX" follows="joint_8" multiplier="-1"/>
+            </xacro:unless>
         </ros2_control>
     </xacro:macro>
 </robot>

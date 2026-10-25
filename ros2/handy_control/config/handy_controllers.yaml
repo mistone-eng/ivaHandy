@@ -19,7 +19,7 @@ joint_trajectory_controller:
       - joint_6
       - joint_7
       - joint_8
-      - joint_9
+      # - joint_9
     command_interfaces:
       - position
     state_interfaces:
@@ -27,7 +27,7 @@ joint_trajectory_controller:
       - velocity
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
-    allow_partial_joints_goal: false
+    allow_partial_joints_goal: true
     open_loop_control: false
     constraints:
       stopped_velocity_tolerance: 0.01
