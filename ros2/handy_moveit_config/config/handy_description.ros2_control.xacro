@@ -42,8 +42,8 @@
                     <plugin>dynamixel_handy_interface/DynamixelHandyInterface</plugin>
                     <param name="port">/dev/ttyUSB0</param>
                     <param name="baud">1000000</param>
-                    <param name="moving_speed">50</param> <!-- Originally 100 -->
-                    <param name="torque_limit">200</param> <!-- Originally 512 -->
+                    <param name="moving_speed">100</param>
+                    <param name="torque_limit">512</param>
                 </xacro:unless>
             </hardware>
 
@@ -52,7 +52,7 @@
             <xacro:dxl_joint name="joint_3" id="3" model="EX" init="${initial_positions['joint_3']}"/>
             <xacro:dxl_joint name="joint_4" id="4" model="EX" init="${initial_positions['joint_4']}"/>
             <xacro:dxl_joint name="joint_5" id="5" model="MX" init="${initial_positions['joint_5']}"/>
-            <xacro:dxl_joint name="joint_6" id="6" model="MX" init="${initial_positions['joint_6']}"/>
+            <xacro:dxl_joint name="joint_6" id="6" model="MX" sign="-1" init="${initial_positions['joint_6']}"/>
             <xacro:dxl_joint name="joint_7" id="7" model="MX" init="${initial_positions['joint_7']}"/>
             <xacro:dxl_joint name="joint_8" id="8" model="AX" init="${initial_positions['joint_8']}"/>
 
