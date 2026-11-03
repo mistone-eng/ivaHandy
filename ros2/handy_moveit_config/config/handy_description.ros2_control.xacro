@@ -43,7 +43,7 @@
                     <param name="port">/dev/ttyUSB0</param>
                     <param name="baud">1000000</param>
                     <param name="moving_speed">100</param>
-                    <param name="torque_limit">512</param>
+                    <param name="torque_limit">800</param>
                 </xacro:unless>
             </hardware>
 
