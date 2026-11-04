@@ -9,9 +9,9 @@ num_outgoing_halt_msgs_to_publish: 4
 
 command_in_type: "unitless"
 scale:
-  linear: 0.2
-  rotational: 0.5
-  joint: 0.5
+  linear: 0.05
+  rotational: 0.2
+  joint: 0.2
 
 command_out_type: std_msgs/Float64MultiArray
 command_out_topic: /servo_controller/commands
@@ -35,7 +35,7 @@ joint_command_in_topic: ~/delta_joint_cmds
 joint_topic: /joint_states
 status_topic: ~/status
 
-check_collisions: false
+check_collisions: true
 collision_check_rate: 10.0
 collision_check_type: threshold_distance
 self_collision_proximity_threshold: 0.01

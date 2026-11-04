@@ -74,4 +74,11 @@
     <disable_collisions link1="link_6" link2="link_8" reason="Never"/>
     <disable_collisions link1="link_7" link2="link_8" reason="Adjacent"/>
     <disable_collisions link1="link_8" link2="link_9" reason="Adjacent"/>
+    <disable_collisions link1="link_9" link2="link_10" reason="Never"/>
+    <disable_collisions link1="link_7" link2="link_9" reason="Never"/>
+    <disable_collisions link1="link_7" link2="link_10" reason="Never"/>
+    <disable_collisions link1="link_8" link2="link_eef" reason="Adjacent"/>
+    <disable_collisions link1="link_9" link2="link_eef" reason="Never"/>
+    <disable_collisions link1="link_10" link2="link_eef" reason="Never"/>
+    <disable_collisions link1="link_7" link2="link_eef" reason="Never"/>
 </robot>
