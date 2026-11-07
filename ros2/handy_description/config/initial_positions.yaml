@@ -1,4 +1,4 @@
-# Default initial positions for handy_description's ros2_control fake system
+# Initial joint positions for the mock (use_mock:=true) hardware.
 
 initial_positions:
   joint_1: 0.0
