@@ -15,6 +15,22 @@ LIMIT_FILES = {
 }
 
 
+# The arm always plans with Pilz PTP. The hand (joint_8/9) never uses a motion planner:
+# it is commanded directly through hand_controller (`handy hand open|close`).
+DEFAULT_PIPELINE = 'pilz_industrial_motion_planner'
+ARM_DEFAULT_PLANNER = 'PTP'
+
+
+def rviz_planner_defaults():
+    """Parameters the RViz MotionPlanning panel reads on its OWN node (Humble
+    MoveGroupInterface::getDefaultPlannerId / default pipeline lookup) to preselect
+    Pilz + PTP for the arm when it opens."""
+    return {
+        'move_group.default_planning_pipeline': DEFAULT_PIPELINE,
+        'move_group.arm.default_planner_config': ARM_DEFAULT_PLANNER,
+    }
+
+
 def declare_limits_arg():
     return DeclareLaunchArgument(
         'limits', default_value='test',
@@ -30,7 +46,7 @@ def build_moveit_config(limits='test'):
         MoveItConfigsBuilder('handy_description', package_name='handy_moveit_config')
         .joint_limits(file_path=os.path.join(config_dir, LIMIT_FILES[limits]))
         .planning_pipelines(pipelines=['ompl', 'pilz_industrial_motion_planner'],
-                            default_planning_pipeline='pilz_industrial_motion_planner')
+                            default_planning_pipeline=DEFAULT_PIPELINE)
         .pilz_cartesian_limits(file_path='config/pilz_cartesian_limits.yaml')
         .to_moveit_configs()
     )
