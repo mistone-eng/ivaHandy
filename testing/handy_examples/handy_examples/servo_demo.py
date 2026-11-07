@@ -67,28 +67,43 @@ class ServoDemo(Node):
         while rclpy.ok() and not all(j in self.joints for j in READY):
             rclpy.spin_once(self, timeout_sec=0.1)
 
-    def go_to(self, target, tol=0.02, timeout=20.0):
-        """Closed-loop joint jog to a target pose (P-control on Servo joint jog)."""
+    def go_to(self, target, tol=0.02, gain=8.0, stall_time=3.0, max_time=120.0):
+        """Closed-loop joint jog to a target pose (P-control on Servo joint jog).
+
+        Runs at full speed until within 1/gain rad of the goal, then tapers. Instead of a fixed
+        timeout (which depends on Servo's scale and speed), it gives up only when the largest
+        joint error has stopped shrinking for `stall_time` seconds (Servo halted: joint limit,
+        collision, singularity) or after `max_time` as a last resort.
+        """
         self.get_logger().info("Joint jog -> ready pose")
         start = time.monotonic()
-        while rclpy.ok() and time.monotonic() - start < timeout:
+        best_err, best_time = float("inf"), start
+        while rclpy.ok() and time.monotonic() - start < max_time:
             rclpy.spin_once(self, timeout_sec=0.0)
-            names, vels, done = [], [], True
+            names, vels = [], []
+            max_err = 0.0
             for name, goal in target.items():
                 err = goal - self.joints.get(name, goal)
-                if abs(err) > tol:
-                    done = False
-                cmd = max(-1.0, min(1.0, 2.0 * err)) * self.speed
+                max_err = max(max_err, abs(err))
                 names.append(name)
-                vels.append(cmd)
-            if done:
-                self.get_logger().info("Reached ready pose")
+                vels.append(max(-1.0, min(1.0, gain * err)) * self.speed)
+            if max_err <= tol:
+                self.get_logger().info(
+                    f"Reached ready pose in {time.monotonic() - start:.1f} s")
                 return True
+            now = time.monotonic()
+            if max_err < best_err - 0.005:
+                best_err, best_time = max_err, now
+            elif now - best_time > stall_time:
+                self.get_logger().warn(
+                    f"Stalled {max_err:.3f} rad from the ready pose "
+                    f"(Servo status: {STATUS.get(self.status, self.status)})")
+                return False
             msg = self._stamp(JointJog())
             msg.joint_names, msg.velocities = names, vels
             self.joint_pub.publish(msg)
             time.sleep(1.0 / RATE)
-        self.get_logger().warn("Ready pose not reached (check Servo status / limits)")
+        self.get_logger().warn(f"Ready pose not reached within {max_time:.0f} s")
         return False
 
     def twist(self, lin=(0.0, 0.0, 0.0), ang=(0.0, 0.0, 0.0), seconds=2.0, label=""):
