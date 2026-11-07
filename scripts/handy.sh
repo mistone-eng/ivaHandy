@@ -25,6 +25,19 @@ _handy_confirm_real() {
   [ "$ok" = "yes" ] || { echo "Aborted."; return 1; }
 }
 
+# Refuse to start a second stack: two controller managers / Servo nodes on the same topics fight
+# each other (and leftovers from a crashed run can wedge Fast DDS). Matches exact process names.
+_handy_guard() {
+  local running
+  running=$(ps -eo pid=,comm= | awk '$2 ~ /^(ros2_control_no|move_group|servo_node_main|robot_state_pub|rviz2)$/ {print "  " $1 "  " $2}')
+  if [ -n "$running" ]; then
+    echo "!!  A Handy/ROS stack is already running:"
+    echo "$running"
+    echo "Stop it first (Ctrl+C in its terminal, or 'handy kill'), then retry."
+    return 1
+  fi
+}
+
 handy() {
   local cmd="${1:-help}"; shift || true
   case "$cmd" in
@@ -44,6 +57,7 @@ handy() {
       handy env
       ;;
     control)
+      _handy_guard || return 1
       handy env >/dev/null
       case "${1:-mock}" in
         mock) ros2 launch handy_control control.launch.py use_mock:=true ;;
@@ -52,10 +66,12 @@ handy() {
       esac
       ;;
     sim)
+      _handy_guard || return 1
       handy env >/dev/null
       ros2 launch handy_bringup demo.launch.py use_mock:=true limits:="${1:-full}"
       ;;
     real)
+      _handy_guard || return 1
       handy env >/dev/null
       _handy_confirm_real || return 1
       ros2 launch handy_bringup demo.launch.py use_mock:=false limits:="${1:-test}"
