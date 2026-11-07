@@ -1,0 +1,7 @@
+<library path="handy_hardware">
+  <class name="handy_hardware/DynamixelSystem"
+         type="handy_hardware::DynamixelSystem"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>Handy arm: Dynamixel Protocol 1.0 servos via handy_motor_api.</description>
+  </class>
+</library>

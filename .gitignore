@@ -4,3 +4,7 @@ frames_*.pdf
 frames_*.gvbuild/
 install/
 log/
+__pycache__/
+
+# Local Claude Code context (not published)
+.claude/

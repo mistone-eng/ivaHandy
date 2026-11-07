@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>handy_calibrate</name>
+  <version>0.1.0</version>
+  <description>ROS-free calibration tool for Handy: joint zero offsets and measured ranges</description>
+  <maintainer email="opconnell@gmail.com">owenc</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>ament_index_cpp</depend>
+  <depend>handy_motor_api</depend>
+  <depend>yaml_cpp_vendor</depend>
+  <exec_depend>handy_description</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
