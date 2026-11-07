@@ -2,6 +2,42 @@
 
 document and code for Handy arm include tutorials, mechanical files and ROS-related packages.
 
+## ROS 2 (Humble) — current
+
+```
+third_party/DynamixelSDK   ROBOTIS SDK (git submodule)
+ros2/handy_motor_api       ROS-free C++ motor API for the Protocol 1.0 servos + handy_motor_cli
+ros2/handy_hardware        ros2_control plugin (handy_hardware/DynamixelSystem) on top of handy_motor_api
+ros2/handy_description     URDF, meshes, ros2_control xacro, servo table (config/hardware.yaml), calibration
+ros2/handy_control         controllers + control.launch.py (hardware layer only)
+ros2/handy_moveit_config   MoveIt 2 + MoveIt Servo configuration and launch files
+ros2/handy_bringup         demo.launch.py: full stack (control + MoveIt + RViz + Servo)
+testing/handy_examples     Servo demo / jog scripts
+testing/handy_calibrate    joint zero-offset and range calibration (no ROS needed)
+scripts/handy.sh           `handy` shell helper
+```
+
+Quick start:
+
+```bash
+mkdir -p ~/handy_ws/src && cd ~/handy_ws/src
+git clone --recurse-submodules https://github.com/mistone-eng/ivaHandy.git
+echo 'source ~/handy_ws/src/ivaHandy/scripts/handy.sh' >> ~/.bashrc && source ~/.bashrc
+cd ~/handy_ws && rosdep install --from-paths src --ignore-src -r -y && handy build
+
+handy sim            # full stack on mock hardware
+handy demo           # MoveIt Servo demo (second terminal)
+handy motors scan    # real arm: check all 9 servos answer (no ROS running)
+handy calibrate zero # real arm: measure joint zero offsets
+handy real test      # real arm, small +/-0.3 rad joint window
+```
+
+Already cloned without submodules? `git submodule update --init`.
+Real hardware: user in the `dialout` group, and set the U2D2 latency timer to 1 ms
+(`echo 1 | sudo tee /sys/bus/usb-serial/devices/ttyUSB0/latency_timer`).
+
+The sections below describe the legacy ROS 1 packages in `ros/`.
+
 ## Doc
 
 Doc includes tutorials about how to build your own robot arm. Contents contain the whole process starting from

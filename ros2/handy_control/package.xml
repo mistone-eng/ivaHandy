@@ -2,20 +2,21 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>handy_control</name>
-  <version>0.1.0</version>
-  <description>ROS 2 control package for the Handy arm in disconnected/mock mode</description>
+  <version>0.2.0</version>
+  <description>Hardware layer for the Handy arm: ros2_control node, controller config and spawners (no MoveIt)</description>
   <maintainer email="opconnell@gmail.com">owenc</maintainer>
   <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>rclcpp</depend>
-  <depend>controller_manager</depend>
-  <depend>hardware_interface</depend>
-  <depend>pluginlib</depend>
-  <depend>ros2_control</depend>
-  <depend>std_msgs</depend>
-
+  <exec_depend>handy_description</exec_depend>
+  <exec_depend>handy_hardware</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>joint_trajectory_controller</exec_depend>
+  <exec_depend>position_controllers</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>xacro</exec_depend>
   <exec_depend>ros2launch</exec_depend>
 
   <export>
