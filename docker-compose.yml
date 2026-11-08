@@ -1,0 +1,28 @@
+# Handy development container (ROS 2 Humble + VNC). Run from the repository root:
+#
+#   docker compose up -d --build      # build (first time) and start
+#   open http://localhost:6080        # MATE desktop in the browser (password: ubuntu)
+#   docker compose down               # stop (the home volume and the workspace are kept)
+#
+# Expects this repo at <workspace>/src/ivaHandy; the whole workspace is mounted at ~/handy_ws.
+# Real arm (Linux hosts only): add -f docker-compose.hardware.yml. See docs/docker.md.
+services:
+  handy:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: ivahandy:humble
+    container_name: handy
+    ports:
+      - "6080:80"                  # noVNC
+    shm_size: 1gb                  # Fast DDS shared memory (Docker's default 64 MB is too small)
+    environment:
+      USER: ubuntu
+      PASSWORD: ${HANDY_PASSWORD:-ubuntu}   # VNC + sudo password
+    volumes:
+      - handy_home:/home/ubuntu    # keeps Claude Code, ~/.claude, gh login, git config, ~/.bashrc
+      - ../..:/home/ubuntu/handy_ws  # the colcon workspace (build/install/log stay on the host)
+    restart: unless-stopped
+
+volumes:
+  handy_home: {}

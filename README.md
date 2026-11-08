@@ -33,6 +33,11 @@ handy real test      # real arm, small +/-0.3 rad joint window
 ```
 
 Already cloned without submodules? `git submodule update --init`.
+
+**Docker** (what we develop in, works on Apple Silicon Macs and Linux):
+`docker compose up -d --build` from the repo root, then open http://localhost:6080 and use the
+`handy` commands in a desktop terminal. The real arm needs a Linux host
+(`-f docker-compose.hardware.yml`). Details: [docs/docker.md](docs/docker.md).
 Real hardware: user in the `dialout` group, and set the U2D2 latency timer to 1 ms
 (`echo 1 | sudo tee /sys/bus/usb-serial/devices/ttyUSB0/latency_timer`).
 

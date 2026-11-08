@@ -1,0 +1,11 @@
+# Only ros2/, testing/ and third_party/ are needed (package.xml files for rosdep).
+.git
+**/.git
+.claude
+legacy
+mechanical
+docs
+**/build
+**/install
+**/log
+**/__pycache__
