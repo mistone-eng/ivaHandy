@@ -5,7 +5,7 @@ import pytest
 import yaml
 from ament_index_python.packages import get_package_share_directory
 
-from handy_examples.poses import ARM_JOINTS, HAND, HAND_JOINT, READY, SERVO_STATUS
+from handy_examples.poses import ARM_JOINTS, HAND, HAND_JOINT, READY, SERVO_STATUS, WAVE
 
 
 def _limits(file_name):
@@ -33,6 +33,12 @@ def test_ready_needs_full_limits():
     """servo_demo documents that READY lies outside the +/-0.3 test window."""
     test = _limits('joint_limits_test.yaml')
     assert any(not _inside(test, j, READY[j]) for j in ARM_JOINTS)
+
+
+@pytest.mark.parametrize('joint', ARM_JOINTS)
+def test_wave_inside_full_limits(joint):
+    assert sorted(WAVE) == sorted(ARM_JOINTS)
+    assert _inside(_limits('joint_limits.yaml'), joint, WAVE[joint])
 
 
 @pytest.mark.parametrize('name', sorted(HAND))

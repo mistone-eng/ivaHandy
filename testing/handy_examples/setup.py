@@ -21,6 +21,7 @@ setup(
         'console_scripts': [
             'servo_demo = handy_examples.servo_demo:main',
             'servo_jog = handy_examples.servo_jog:main',
+            'servo_wave = handy_examples.servo_wave:main',
         ],
     },
 )

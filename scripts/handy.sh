@@ -8,6 +8,7 @@
 #   handy sim [test|full]     full stack on mock hardware (default: full)
 #   handy real [test|full]    full stack on REAL Dynamixels (default: test) -- asks first
 #   handy demo [speed]        run the Servo demo (default speed 0.5; use 0.3 on real arm)
+#   handy wave [speed] [patterns]  sine-wave Servo demo (figure8 helix snake hello)
 #   handy jog <joint> <vel>   e.g. handy jog joint_2 -0.5
 #   handy hand open|close|neutral|<rad> [sec]   gripper (joint_8 via hand_controller)
 #   handy calibrate check|zero|limits   joint calibration (NO ROS running; see handy_calibrate)
@@ -89,6 +90,15 @@ handy() {
       handy env >/dev/null
       ros2 run handy_examples servo_demo --speed "${1:-0.5}"
       ;;
+    wave)
+      handy env >/dev/null
+      local wave_speed="${1:-1.0}"; shift || true
+      if [ $# -gt 0 ]; then
+        ros2 run handy_examples servo_wave --speed "$wave_speed" --only "$@"
+      else
+        ros2 run handy_examples servo_wave --speed "$wave_speed"
+      fi
+      ;;
     jog)
       handy env >/dev/null
       [ $# -ge 2 ] || { echo "usage: handy jog <joint> <vel>"; return 1; }
@@ -155,7 +165,7 @@ handy() {
         && echo "^ still running -- kill -9 <PID>" || echo "All ROS processes stopped."
       ;;
     *)
-      sed -n '2,17p' "$HANDY_WS/src/ivaHandy/scripts/handy.sh" | sed 's/^# \{0,1\}//'
+      sed -n '2,18p' "$HANDY_WS/src/ivaHandy/scripts/handy.sh" | sed 's/^# \{0,1\}//'
       ;;
   esac
 }
