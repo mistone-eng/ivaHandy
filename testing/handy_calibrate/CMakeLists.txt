@@ -20,4 +20,9 @@ target_link_libraries(handy_calibrate iva_dynamixel_core::iva_dynamixel_core yam
 
 install(TARGETS handy_calibrate DESTINATION lib/${PROJECT_NAME})
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
 ament_package()

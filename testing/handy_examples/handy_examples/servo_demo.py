@@ -113,8 +113,10 @@ class ServoDemo(Node):
         while time.monotonic() < end and rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.0)
             msg = self._stamp(TwistStamped())
-            msg.twist.linear.x, msg.twist.linear.y, msg.twist.linear.z = (v * self.speed for v in lin)
-            msg.twist.angular.x, msg.twist.angular.y, msg.twist.angular.z = (v * self.speed for v in ang)
+            lx, ly, lz = (v * self.speed for v in lin)
+            ax, ay, az = (v * self.speed for v in ang)
+            msg.twist.linear.x, msg.twist.linear.y, msg.twist.linear.z = lx, ly, lz
+            msg.twist.angular.x, msg.twist.angular.y, msg.twist.angular.z = ax, ay, az
             self.twist_pub.publish(msg)
             time.sleep(1.0 / RATE)
         self._spin_for(0.5)  # let Servo settle between legs
