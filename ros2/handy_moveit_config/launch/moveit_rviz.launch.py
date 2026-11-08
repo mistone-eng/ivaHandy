@@ -1,6 +1,7 @@
 """RViz with the MoveIt MotionPlanning panel for Handy.
 
-The panel opens with the arm on Pilz PTP (see launch_utils.rviz_planner_defaults).
+The panel opens on the Pilz pipeline. Humble cannot preselect the planner: choose PTP in the
+Context tab (MoveIt 2.5.10 reads it from an RViz parameter that is never declared).
 """
 import os
 
@@ -10,8 +11,7 @@ from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-from handy_moveit_config.launch_utils import (
-    build_moveit_config, declare_limits_arg, rviz_planner_defaults)
+from handy_moveit_config.launch_utils import build_moveit_config, declare_limits_arg
 
 
 def _launch(context):
@@ -27,7 +27,6 @@ def _launch(context):
             config.planning_pipelines,
             config.robot_description_kinematics,
             config.joint_limits,
-            rviz_planner_defaults(),
         ],
     )]
 

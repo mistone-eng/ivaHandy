@@ -15,20 +15,10 @@ LIMIT_FILES = {
 }
 
 
-# The arm always plans with Pilz PTP. The hand (joint_8/9) never uses a motion planner:
-# it is commanded directly through hand_controller (`handy hand open|close`).
+# Pilz is the default planning pipeline. Humble's RViz MotionPlanning panel cannot be
+# preconfigured to select a planner (PTP) -- pick it in the Context tab; see the README.
+# The hand (joint_8/9) never uses a motion planner: it is commanded through hand_controller.
 DEFAULT_PIPELINE = 'pilz_industrial_motion_planner'
-ARM_DEFAULT_PLANNER = 'PTP'
-
-
-def rviz_planner_defaults():
-    """Parameters the RViz MotionPlanning panel reads on its OWN node (Humble
-    MoveGroupInterface::getDefaultPlannerId / default pipeline lookup) to preselect
-    Pilz + PTP for the arm when it opens."""
-    return {
-        'move_group.default_planning_pipeline': DEFAULT_PIPELINE,
-        'move_group.arm.default_planner_config': ARM_DEFAULT_PLANNER,
-    }
 
 
 def declare_limits_arg():

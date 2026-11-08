@@ -4,7 +4,7 @@ This is the ONLY launch file that composes layers; each included file also runs 
 
   ros2 launch handy_bringup demo.launch.py                              # mock, test limits
   ros2 launch handy_bringup demo.launch.py limits:=full
-  ros2 launch handy_bringup demo.launch.py use_mock:=false              # REAL arm (prefer `handy real`)
+  ros2 launch handy_bringup demo.launch.py use_mock:=false              # REAL (use `handy real`)
   ros2 launch handy_bringup demo.launch.py rviz:=false servo:=false
 """
 import os
