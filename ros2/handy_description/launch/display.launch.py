@@ -1,15 +1,24 @@
+"""View the Handy model in RViz and move its joints with sliders (no ros2_control, no MoveIt).
+
+  ros2 launch handy_description display.launch.py
+
+Loads the complete description (handy.urdf.xacro). Useful to check the URDF, and to compare
+the zero pose against the real arm when running `handy calibrate zero`.
+"""
 import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.substitutions import Command, FindExecutable
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
     pkg_share = get_package_share_directory('handy_description')
-    urdf_path = os.path.join(pkg_share, 'urdf', 'handy_description.urdf.xacro')
-    robot_description = Command([FindExecutable(name='xacro'), ' ', urdf_path])
+    urdf_path = os.path.join(pkg_share, 'urdf', 'handy.urdf.xacro')
+    robot_description = ParameterValue(
+        Command([FindExecutable(name='xacro'), ' ', urdf_path]), value_type=str)
     rviz_config = os.path.join(pkg_share, 'config', 'urdf.rviz')
 
     return LaunchDescription([
@@ -17,17 +26,17 @@ def generate_launch_description():
             package='robot_state_publisher',
             executable='robot_state_publisher',
             parameters=[{'robot_description': robot_description}],
-            output='screen'
+            output='screen',
         ),
         Node(
             package='joint_state_publisher_gui',
             executable='joint_state_publisher_gui',
-            output='screen'
+            output='screen',
         ),
         Node(
             package='rviz2',
             executable='rviz2',
             arguments=['-d', rviz_config],
-            output='screen'
+            output='screen',
         ),
     ])

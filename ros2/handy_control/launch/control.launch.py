@@ -70,14 +70,15 @@ def generate_launch_description():
     motor_state_publisher = Node(
         package='iva_dynamixel_tools',
         executable='motor_state_publisher',
-        parameters=[{'port_name': '/dev/ttyUSB0', 'port_namespace': 'ttyUSB0', 'update_rate': 100.0}],
+        parameters=[{'port_name': '/dev/ttyUSB0', 'port_namespace': 'ttyUSB0',
+                     'update_rate': 100.0}],
         condition=UnlessCondition(use_mock),
         output='screen',
     )
 
     return LaunchDescription([
         DeclareLaunchArgument('use_mock', default_value='true',
-                              description='true = mock_components, false = real Dynamixel hardware'),
+                              description='true = mock_components, false = real Dynamixels'),
         robot_state_publisher,
         controller_manager,
         RegisterEventHandler(OnProcessStart(target_action=controller_manager, on_start=spawners)),

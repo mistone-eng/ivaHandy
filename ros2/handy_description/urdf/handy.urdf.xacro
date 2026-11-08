@@ -15,9 +15,6 @@
     <xacro:arg name="calibration_file"
                default="$(find handy_description)/config/calibration.yaml" />
 
-    <!-- Must come BEFORE the include: xacro keeps the first definition of an arg.
-         Turns off the legacy ros2_control block inside handy_description.urdf.xacro. -->
-    <xacro:arg name="description_ros2_control" default="false" />
     <xacro:include filename="$(find handy_description)/urdf/handy_description.urdf.xacro" />
 
     <xacro:include filename="$(find handy_description)/urdf/handy.ros2_control.xacro" />

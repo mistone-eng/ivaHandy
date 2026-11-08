@@ -50,7 +50,6 @@ handy() {
       ;;
     build)
       ( cd "$HANDY_WS" || exit 1
-        [ -d src/ivaHandy/ros ] && touch src/ivaHandy/ros/COLCON_IGNORE
         source /opt/ros/humble/setup.bash
         # --packages-up-to also builds ivaDynamixel from third_party/ (DynamixelSDK comes from apt)
         # shellcheck disable=SC2086
@@ -96,7 +95,8 @@ handy() {
         ''|*[!0-9.-]*) echo "usage: handy hand open|close|neutral|<rad -0.514..0.125> [seconds]"; return 1 ;;
         *)       pos="$1" ;;
       esac
-      ros2 topic pub -w 1 --once /hand_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory \
+      # --keep-alive: with the 0.1 s default the node can exit before DDS delivers the message
+      ros2 topic pub -w 1 --once --keep-alive 1.0 /hand_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory \
         "{joint_names: [joint_8], points: [{positions: [$pos], time_from_start: {sec: ${2:-1}}}]}" >/dev/null \
         && echo "hand -> joint_8 = $pos (${2:-1} s)"
       ;;

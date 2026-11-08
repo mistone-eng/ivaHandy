@@ -11,9 +11,10 @@ setup(
         ('share/' + package_name, ['package.xml']),
     ],
     install_requires=['setuptools'],
+    tests_require=['pytest'],
     zip_safe=True,
-    maintainer='owenc',
-    maintainer_email='opconnell@gmail.com',
+    maintainer='Owen Connell',
+    maintainer_email='oconnell7@gatech.edu',
     description='Example MoveIt Servo clients for the Handy arm',
     license='BSD-3-Clause',
     entry_points={

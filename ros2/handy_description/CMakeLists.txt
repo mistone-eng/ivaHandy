@@ -1,32 +1,15 @@
 cmake_minimum_required(VERSION 3.8)
 project(handy_description)
 
+# Handy robot model: URDF/xacro, meshes, ros2_control block, servo table and calibration.
+
 find_package(ament_cmake REQUIRED)
-find_package(xacro REQUIRED)
 
-install(
-  DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}
-)
+install(DIRECTORY config launch meshes urdf DESTINATION share/${PROJECT_NAME})
 
-install(
-  DIRECTORY urdf
-  DESTINATION share/${PROJECT_NAME}
-)
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
-install(
-  DIRECTORY meshes
-  DESTINATION share/${PROJECT_NAME}
-)
-
-install(
-  DIRECTORY config
-  DESTINATION share/${PROJECT_NAME}
-)
-
-install(
-  PROGRAMS
-  scripts/publish_robot_description.py
-  DESTINATION lib/${PROJECT_NAME}
-)
 ament_package()
