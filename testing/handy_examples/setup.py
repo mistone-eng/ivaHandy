@@ -22,6 +22,7 @@ setup(
             'servo_demo = handy_examples.servo_demo:main',
             'servo_jog = handy_examples.servo_jog:main',
             'servo_wave = handy_examples.servo_wave:main',
+            'track_target = handy_examples.track_target:main',
         ],
     },
 )

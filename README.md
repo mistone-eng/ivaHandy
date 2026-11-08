@@ -12,7 +12,8 @@ ros2/handy_description     URDF, meshes, ros2_control xacro, servo table (config
 ros2/handy_control         controllers + control.launch.py (hardware layer only)
 ros2/handy_moveit_config   MoveIt 2 + MoveIt Servo configuration and launch files
 ros2/handy_bringup         demo.launch.py: full stack (control + MoveIt + RViz + Servo)
-testing/handy_examples     Servo demo / jog scripts
+ros2/handy_api             Python API for scripts / computer vision (Servo, planned moves, gripper, TF)
+testing/handy_examples     Servo demo, wave patterns, target tracking, jog (built on handy_api)
 testing/handy_calibrate    joint zero-offset and range calibration (no ROS needed)
 scripts/handy.sh           `handy` shell helper
 ```

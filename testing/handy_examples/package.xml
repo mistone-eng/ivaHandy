@@ -7,6 +7,8 @@
   <maintainer email="oconnell7@gatech.edu">Owen Connell</maintainer>
   <license>BSD-3-Clause</license>
 
+  <exec_depend>handy_api</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>control_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
