@@ -1,38 +1,35 @@
 <?xml version="1.0"?>
 <!--
   ros2_control block for Handy.
-  Servo ids/models/signs come from config/hardware.yaml, zero offsets from config/calibration.yaml
-  (written by handy_calibrate). Do not hard-code them here.
+  Real hardware uses ivaDynamixel (third_party/ivaDynamixel, iva_dynamixel_hardware/DynamixelSystem).
+  Joint <param>s are the ivaDynamixel names: id from config/hardware.yaml,
+  init/min/max (+ slave_calibration_offset) from config/calibration.yaml (handy_calibrate).
+  Do not hard-code them here.
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <!-- One commanded Dynamixel joint. init is only used by the mock hardware. -->
-    <xacro:macro name="dxl_joint" params="name hw cal init:=0.0">
+    <!-- One Dynamixel joint. init_pos is only used by the mock hardware. -->
+    <xacro:macro name="dxl_joint" params="name hw cal use_mock init_pos:=0.0">
         <xacro:property name="j" value="${hw['joints'][name]}"/>
+        <xacro:property name="c" value="${cal['joints'][name]}"/>
+        <xacro:property name="d" value="${hw['defaults']}"/>
         <joint name="${name}">
-            <param name="id">${j['id']}</param>
-            <param name="model">${j['model']}</param>
-            <param name="sign">${j['sign']}</param>
-            <param name="offset_ticks">${cal['offset_ticks'][name]}</param>
+            <xacro:unless value="${use_mock}">
+                <param name="id">${j['id']}</param>
+                <param name="init">${c['init']}</param>
+                <param name="min">${c['min']}</param>
+                <param name="max">${c['max']}</param>
+                <param name="joint_speed">${j.get('joint_speed', d['joint_speed'])}</param>
+                <param name="joint_torque_limit">${j.get('joint_torque_limit', d['joint_torque_limit'])}</param>
+                <xacro:if value="${'slave_id' in j}">
+                    <param name="slave_id">${j['slave_id']}</param>
+                    <param name="slave_calibration_offset">${c.get('slave_calibration_offset', 0)}</param>
+                </xacro:if>
+            </xacro:unless>
             <command_interface name="position"/>
             <state_interface name="position">
-              <param name="initial_value">${init}</param>
+              <param name="initial_value">${init_pos}</param>
             </state_interface>
-            <state_interface name="velocity"/>
-        </joint>
-    </xacro:macro>
-
-    <!-- A servo that mirrors another joint (state only; goal = leader_cmd * multiplier). -->
-    <xacro:macro name="dxl_follower_joint" params="name hw cal">
-        <xacro:property name="j" value="${hw['joints'][name]}"/>
-        <joint name="${name}">
-            <param name="id">${j['id']}</param>
-            <param name="model">${j['model']}</param>
-            <param name="sign">${j['sign']}</param>
-            <param name="offset_ticks">${cal['offset_ticks'][name]}</param>
-            <param name="follows">${j['follows']}</param>
-            <param name="follow_multiplier">${j['multiplier']}</param>
-            <state_interface name="position"/>
             <state_interface name="velocity"/>
         </joint>
     </xacro:macro>
@@ -49,27 +46,22 @@
                     <plugin>mock_components/GenericSystem</plugin>
                 </xacro:if>
                 <xacro:unless value="${use_mock}">
-                    <plugin>handy_hardware/DynamixelSystem</plugin>
-                    <param name="port">${hw['bus']['port']}</param>
-                    <param name="baud">${hw['bus']['baud']}</param>
-                    <param name="moving_speed">${hw['bus']['moving_speed']}</param>
-                    <param name="torque_limit">${hw['bus']['torque_limit']}</param>
+                    <plugin>iva_dynamixel_hardware/DynamixelSystem</plugin>
+                    <param name="port_name">${hw['bus']['port_name']}</param>
+                    <param name="baud_rate">${hw['bus']['baud_rate']}</param>
                 </xacro:unless>
             </hardware>
 
-            <xacro:dxl_joint name="joint_1" hw="${hw}" cal="${cal}" init="${init['joint_1']}"/>
-            <xacro:dxl_joint name="joint_2" hw="${hw}" cal="${cal}" init="${init['joint_2']}"/>
-            <xacro:dxl_joint name="joint_3" hw="${hw}" cal="${cal}" init="${init['joint_3']}"/>
-            <xacro:dxl_joint name="joint_4" hw="${hw}" cal="${cal}" init="${init['joint_4']}"/>
-            <xacro:dxl_joint name="joint_5" hw="${hw}" cal="${cal}" init="${init['joint_5']}"/>
-            <xacro:dxl_joint name="joint_6" hw="${hw}" cal="${cal}" init="${init['joint_6']}"/>
-            <xacro:dxl_joint name="joint_7" hw="${hw}" cal="${cal}" init="${init['joint_7']}"/>
-            <xacro:dxl_joint name="joint_8" hw="${hw}" cal="${cal}" init="${init['joint_8']}"/>
-
-            <!-- Second finger: real hardware only. In mock mode the URDF <mimic> drives it. -->
-            <xacro:unless value="${use_mock}">
-                <xacro:dxl_follower_joint name="joint_9" hw="${hw}" cal="${cal}"/>
-            </xacro:unless>
+            <xacro:dxl_joint name="joint_1" hw="${hw}" cal="${cal}" use_mock="${use_mock}" init_pos="${init['joint_1']}"/>
+            <xacro:dxl_joint name="joint_2" hw="${hw}" cal="${cal}" use_mock="${use_mock}" init_pos="${init['joint_2']}"/>
+            <xacro:dxl_joint name="joint_3" hw="${hw}" cal="${cal}" use_mock="${use_mock}" init_pos="${init['joint_3']}"/>
+            <xacro:dxl_joint name="joint_4" hw="${hw}" cal="${cal}" use_mock="${use_mock}" init_pos="${init['joint_4']}"/>
+            <xacro:dxl_joint name="joint_5" hw="${hw}" cal="${cal}" use_mock="${use_mock}" init_pos="${init['joint_5']}"/>
+            <xacro:dxl_joint name="joint_6" hw="${hw}" cal="${cal}" use_mock="${use_mock}" init_pos="${init['joint_6']}"/>
+            <xacro:dxl_joint name="joint_7" hw="${hw}" cal="${cal}" use_mock="${use_mock}" init_pos="${init['joint_7']}"/>
+            <!-- joint_9 (second finger) is the slave motor of joint_8 on real hardware and a
+                 URDF <mimic> joint everywhere, so it is never listed here. -->
+            <xacro:dxl_joint name="joint_8" hw="${hw}" cal="${cal}" use_mock="${use_mock}" init_pos="${init['joint_8']}"/>
         </ros2_control>
     </xacro:macro>
 </robot>

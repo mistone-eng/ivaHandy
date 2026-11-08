@@ -5,10 +5,10 @@ document and code for Handy arm include tutorials, mechanical files and ROS-rela
 ## ROS 2 (Humble) — current
 
 ```
-third_party/DynamixelSDK   ROBOTIS SDK (git submodule)
-ros2/handy_motor_api       ROS-free C++ motor API for the Protocol 1.0 servos + handy_motor_cli
-ros2/handy_hardware        ros2_control plugin (handy_hardware/DynamixelSystem) on top of handy_motor_api
-ros2/handy_description     URDF, meshes, ros2_control xacro, servo table (config/hardware.yaml), calibration
+third_party/ivaDynamixel   ivaDynamixel for ROS 2 (git submodule, ros2 branch): Dynamixel driver,
+                           ros2_control plugin iva_dynamixel_hardware, motor tools and diagnostics
+ros2/handy_description     URDF, meshes, ros2_control xacro, servo table (config/hardware.yaml),
+                           calibration (config/calibration.yaml: ivaDynamixel init/min/max)
 ros2/handy_control         controllers + control.launch.py (hardware layer only)
 ros2/handy_moveit_config   MoveIt 2 + MoveIt Servo configuration and launch files
 ros2/handy_bringup         demo.launch.py: full stack (control + MoveIt + RViz + Servo)
@@ -27,7 +27,7 @@ cd ~/handy_ws && rosdep install --from-paths src --ignore-src -r -y && handy bui
 
 handy sim            # full stack on mock hardware
 handy demo           # MoveIt Servo demo (second terminal)
-handy motors scan    # real arm: check all 9 servos answer (no ROS running)
+handy motors scan    # real arm: info_dump of all 9 servos (no ROS running)
 handy calibrate zero # real arm: measure joint zero offsets
 handy real test      # real arm, small +/-0.3 rad joint window
 ```
