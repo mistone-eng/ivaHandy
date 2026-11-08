@@ -11,13 +11,14 @@
 #   handy jog <joint> <vel>   e.g. handy jog joint_2 -0.5
 #   handy hand open|close|neutral|<rad> [sec]   gripper (joint_8 via hand_controller)
 #   handy calibrate check|zero|limits   joint calibration (NO ROS running; see handy_calibrate)
-#   handy motors <args>       raw motor CLI, e.g. handy motors scan / handy motors torque all off
+#   handy motors scan|torque <id|all> on|off|<ivaDynamixel tool> [args]   motors, no ROS running
 #   handy status              show Servo status + controllers once
 #   handy mode plan|servo     switch between MoveIt Plan&Execute and Servo
 #   handy kill                stop all leftover ROS processes
 
 HANDY_WS="${HANDY_WS:-$HOME/handy_ws}"
-HANDY_PACKAGES="handy_description handy_motor_api handy_hardware handy_control handy_moveit_config handy_bringup handy_examples handy_calibrate"
+HANDY_PACKAGES="handy_description handy_control handy_moveit_config handy_bringup handy_examples handy_calibrate iva_dynamixel_hardware iva_dynamixel_tools"
+HANDY_MOTOR_IDS="1 2 3 4 5 6 7 8 9"
 
 _handy_confirm_real() {
   echo "!!  REAL HARDWARE: arm will be powered. Clear the area, hand on power."
@@ -51,7 +52,7 @@ handy() {
       ( cd "$HANDY_WS" || exit 1
         [ -d src/ivaHandy/ros ] && touch src/ivaHandy/ros/COLCON_IGNORE
         source /opt/ros/humble/setup.bash
-        # --packages-up-to also builds dynamixel_sdk from third_party/
+        # --packages-up-to also builds ivaDynamixel from third_party/ (DynamixelSDK comes from apt)
         # shellcheck disable=SC2086
         colcon build --symlink-install --packages-up-to $HANDY_PACKAGES "$@" )
       handy env
@@ -104,8 +105,23 @@ handy() {
       ros2 run handy_calibrate handy_calibrate "$@"
       ;;
     motors)
+      # ivaDynamixel tools (third_party/ivaDynamixel/iva_dynamixel_tools); ros2_control must be stopped
       handy env >/dev/null
-      ros2 run handy_motor_api handy_motor_cli "$@"
+      case "$1" in
+        scan)
+          # shellcheck disable=SC2086
+          ros2 run iva_dynamixel_tools info_dump $HANDY_MOTOR_IDS ;;
+        torque)
+          [ $# -eq 3 ] || { echo "usage: handy motors torque <id|all> on|off"; return 1; }
+          local ids="$2"; [ "$2" = "all" ] && ids="$HANDY_MOTOR_IDS"
+          for id in $ids; do ros2 run iva_dynamixel_tools set_torque "$id" "$3"; done ;;
+        info_dump|change_id|set_servo_config|set_torque)
+          local tool="$1"; shift
+          ros2 run iva_dynamixel_tools "$tool" "$@" ;;
+        *)
+          echo "usage: handy motors scan | torque <id|all> on|off | info_dump|change_id|set_servo_config|set_torque [args]"
+          return 1 ;;
+      esac
       ;;
     status)
       handy env >/dev/null

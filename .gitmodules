@@ -1,4 +1,4 @@
-[submodule "third_party/DynamixelSDK"]
-	path = third_party/DynamixelSDK
-	url = https://github.com/ROBOTIS-GIT/DynamixelSDK.git
-	branch = humble
+[submodule "third_party/ivaDynamixel"]
+	path = third_party/ivaDynamixel
+	url = https://github.com/mistone-eng/ivaDynamixel.git
+	branch = ros2

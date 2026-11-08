@@ -4,7 +4,7 @@
   This is the ONE file every launch file should load.
 
     xacro handy.urdf.xacro use_mock:=true    -> mock_components/GenericSystem
-    xacro handy.urdf.xacro use_mock:=false   -> real Dynamixels (handy_hardware plugin)
+    xacro handy.urdf.xacro use_mock:=false   -> real Dynamixels (ivaDynamixel: iva_dynamixel_hardware)
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="handy_description">
     <xacro:arg name="use_mock" default="true" />
