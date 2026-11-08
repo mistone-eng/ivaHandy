@@ -50,6 +50,15 @@ handy() {
       ;;
     build)
       ( cd "$HANDY_WS" || exit 1
+        # Build from a clean environment: drop this workspace's own install/ from the path
+        # variables (sourced by `handy env`), or colcon warns that the packages "are already
+        # built in one or more underlay workspaces" -- i.e. the workspace overriding itself.
+        local var
+        for var in AMENT_PREFIX_PATH CMAKE_PREFIX_PATH COLCON_PREFIX_PATH PYTHONPATH \
+                   LD_LIBRARY_PATH PKG_CONFIG_PATH PATH; do
+          export "$var=$(printf '%s' "${!var}" | tr ':' '\n' \
+            | grep -v "^$HANDY_WS/install" | paste -sd: -)"
+        done
         source /opt/ros/humble/setup.bash
         # --packages-up-to also builds ivaDynamixel from third_party/ (DynamixelSDK comes from apt)
         # shellcheck disable=SC2086
