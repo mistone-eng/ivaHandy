@@ -10,13 +10,13 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
-find_package(handy_motor_api REQUIRED)
+find_package(iva_dynamixel_core REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 add_executable(handy_calibrate src/handy_calibrate.cpp)
 ament_target_dependencies(handy_calibrate ament_index_cpp)
-target_link_libraries(handy_calibrate handy_motor_api::handy_motor_api yaml-cpp)
+target_link_libraries(handy_calibrate iva_dynamixel_core::iva_dynamixel_core yaml-cpp)
 
 install(TARGETS handy_calibrate DESTINATION lib/${PROJECT_NAME})
 
