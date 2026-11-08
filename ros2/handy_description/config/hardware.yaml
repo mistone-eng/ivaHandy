@@ -1,25 +1,21 @@
-# Handy servo table -- the single source of truth for which servo drives which joint.
-# Read by urdf/handy.ros2_control.xacro and by handy_calibrate. Edit by hand.
-#
-#   id     Dynamixel bus id
-#   model  AX | RX | EX | MX   (Protocol 1.0)
-#   sign   +1 / -1: joint direction relative to increasing servo ticks
-#   follows / multiplier: state-only servo whose goal = leader command * multiplier
-#
-# Per-joint zero offsets are NOT here: they are measured into calibration.yaml.
+# Handy servo table for ivaDynamixel (third_party/ivaDynamixel, plugin iva_dynamixel_hardware).
+# Hand-edited. Keys are the ivaDynamixel joint parameters (the ROS 1 controller YAML names).
+# Per-joint calibration (init/min/max, slave_calibration_offset) is in calibration.yaml,
+# written by handy_calibrate -- do not put it here.
 bus:
-  port: /dev/ttyUSB0
-  baud: 1000000
-  moving_speed: 100    # Protocol 1.0: 0 = UNLIMITED, never use 0
-  torque_limit: 800    # 0..1023
+  port_name: /dev/ttyUSB0
+  baud_rate: 1000000
 
-joints:
-  joint_1: {id: 1, model: EX, sign: 1}
-  joint_2: {id: 2, model: MX, sign: 1}
-  joint_3: {id: 3, model: EX, sign: 1}
-  joint_4: {id: 4, model: EX, sign: 1}
-  joint_5: {id: 5, model: MX, sign: 1}
-  joint_6: {id: 6, model: MX, sign: -1}
-  joint_7: {id: 7, model: MX, sign: 1}
-  joint_8: {id: 8, model: AX, sign: 1}
-  joint_9: {id: 9, model: AX, sign: 1, follows: joint_8, multiplier: -1}
+defaults:                     # applied to every joint unless a joint overrides the key
+  joint_speed: 1.16           # rad/s (= the old moving_speed 100 raw on AX/EX, 97 on MX)
+  joint_torque_limit: 0.782   # fraction of max torque (= the old torque_limit 800/1023)
+
+joints:                       # models are auto-detected on ping; listed here for reference
+  joint_1: {id: 1}            # EX-106+
+  joint_2: {id: 2}            # MX
+  joint_3: {id: 3}            # EX-106+
+  joint_4: {id: 4}            # EX-106+
+  joint_5: {id: 5}            # MX
+  joint_6: {id: 6}            # MX (flipped: min > max in calibration.yaml)
+  joint_7: {id: 7}            # MX
+  joint_8: {id: 8, slave_id: 9}  # AX-12 gripper; id 9 mirrors it (JointPositionControllerDualMotor)

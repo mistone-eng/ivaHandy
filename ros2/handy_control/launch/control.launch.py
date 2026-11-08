@@ -3,7 +3,10 @@
 Nothing MoveIt-related lives here; compose the full stack with handy_bringup/demo.launch.py.
 
   ros2 launch handy_control control.launch.py                  # mock hardware (default)
-  ros2 launch handy_control control.launch.py use_mock:=false  # REAL Dynamixels
+  ros2 launch handy_control control.launch.py use_mock:=false  # REAL Dynamixels (ivaDynamixel)
+
+Real hardware runs ivaDynamixel (third_party/ivaDynamixel): the iva_dynamixel_hardware plugin,
+plus motor_state_publisher for motor_states/ttyUSB0, <joint>/state and /diagnostics.
 
 Controllers (config/ros2_controllers.yaml):
   joint_state_broadcaster  active
@@ -18,6 +21,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler
+from launch.conditions import UnlessCondition
 from launch.event_handlers import OnProcessStart
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
@@ -62,10 +66,20 @@ def generate_launch_description():
         spawner('arm_controller', '--inactive'),
     ]
 
+    # ROS 1 style motor topics and diagnostics (real hardware only)
+    motor_state_publisher = Node(
+        package='iva_dynamixel_tools',
+        executable='motor_state_publisher',
+        parameters=[{'port_name': '/dev/ttyUSB0', 'port_namespace': 'ttyUSB0', 'update_rate': 100.0}],
+        condition=UnlessCondition(use_mock),
+        output='screen',
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument('use_mock', default_value='true',
                               description='true = mock_components, false = real Dynamixel hardware'),
         robot_state_publisher,
         controller_manager,
         RegisterEventHandler(OnProcessStart(target_action=controller_manager, on_start=spawners)),
+        motor_state_publisher,
     ])

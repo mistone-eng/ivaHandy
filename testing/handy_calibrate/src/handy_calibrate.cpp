@@ -1,8 +1,12 @@
-// handy_calibrate: measure Handy's joint zero offsets and ranges with NO ROS running.
+// handy_calibrate: measure Handy's ivaDynamixel calibration with NO ROS running.
 //
 //   ros2 run handy_calibrate handy_calibrate check            live joint angles with current calibration
-//   ros2 run handy_calibrate handy_calibrate zero             measure offset_ticks -> calibration.yaml
-//   ros2 run handy_calibrate handy_calibrate limits [--out F] measure joint ranges by hand -> YAML
+//   ros2 run handy_calibrate handy_calibrate zero             measure init (+ gripper slave offset)
+//   ros2 run handy_calibrate handy_calibrate limits           measure min/max by moving joints by hand
+//
+// Writes handy_description/config/calibration.yaml in ivaDynamixel terms (encoder ticks):
+//   init = encoder value at joint angle 0, min/max = encoder limits (min > max = flipped),
+//   slave_calibration_offset (slave goal = MAX_POSITION - master goal + offset).
 //
 // Options: --port P  --baud B  (default: bus section of handy_description/config/hardware.yaml)
 //          --cal F   calibration file to read/write (default: handy_description's calibration.yaml)
@@ -13,44 +17,56 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <cstdio>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits>
 #include <map>
+#include <memory>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "handy_motor_api/dynamixel_bus.hpp"
-#include "handy_motor_api/joint.hpp"
-#include "handy_motor_api/model.hpp"
+#include "iva_dynamixel_core/dynamixel_io.hpp"
+#include "iva_dynamixel_core/motor_parameters.hpp"
 
 namespace fs = std::filesystem;
-using namespace handy_motor_api;
+namespace dxl = iva_dynamixel_core;
 using Clock = std::chrono::steady_clock;
 
 namespace
 {
 
+struct Joint
+{
+  std::string name;
+  int id = 0;
+  std::optional<int> slave_id;
+  // calibration (ivaDynamixel joint params)
+  int init = 0, min = 0, max = 0, slave_offset = 0;
+  bool flipped() const {return min > max;}
+  dxl::MotorParameters motor;  // filled from the servo (model auto-detected)
+};
+
 struct Setup
 {
   std::string port;
   int baud = 1000000;
-  std::vector<JointConfig> joints;  // ordered as in hardware.yaml
+  std::vector<Joint> joints;  // ordered as in hardware.yaml
   fs::path cal_file;
 };
 
 int usage()
 {
   std::cerr <<
-    "usage: handy_calibrate [--port P] [--baud B] [--cal FILE] <check|zero|limits> [--out FILE]\n"
+    "usage: handy_calibrate [--port P] [--baud B] [--cal FILE] <check|zero|limits>\n"
     "  check   print live joint angles using the current calibration (Enter to stop)\n"
-    "  zero    hold the arm in the URDF zero pose -> writes offset_ticks to calibration.yaml\n"
-    "  limits  move each joint through its range by hand -> writes measured limits YAML\n";
+    "  zero    hold the arm in the URDF zero pose -> writes init (and the gripper slave offset)\n"
+    "  limits  move each joint through its range by hand -> writes min/max\n";
   return 2;
 }
 
@@ -75,59 +91,80 @@ Setup load_setup(const std::string & cal_override)
     "config";
   Setup s;
   const YAML::Node hw = YAML::LoadFile((cfg / "hardware.yaml").string());
-  s.port = hw["bus"]["port"].as<std::string>();
-  s.baud = hw["bus"]["baud"].as<int>();
+  s.port = hw["bus"]["port_name"].as<std::string>();
+  s.baud = hw["bus"]["baud_rate"].as<int>();
 
   // With `colcon build --symlink-install` the installed file is a symlink into src/, so resolving
   // it means calibration lands in the source tree (and in git), not in a throwaway install/ copy.
   s.cal_file = cal_override.empty() ? fs::path(cfg / "calibration.yaml") : fs::path(cal_override);
   if (fs::is_symlink(s.cal_file)) {s.cal_file = fs::canonical(s.cal_file);}
-  YAML::Node cal;
-  if (fs::exists(s.cal_file)) {cal = YAML::LoadFile(s.cal_file.string());}
+  const YAML::Node cal = YAML::LoadFile(s.cal_file.string());
 
   for (const auto & item : hw["joints"]) {
-    JointConfig j;
+    Joint j;
     j.name = item.first.as<std::string>();
-    const YAML::Node & n = item.second;
-    j.id = static_cast<uint8_t>(n["id"].as<int>());
-    j.model = parse_model(n["model"].as<std::string>());
-    j.sign = n["sign"] ? n["sign"].as<int>() : 1;
-    if (n["follows"]) {
-      j.follows = n["follows"].as<std::string>();
-      j.multiplier = n["multiplier"] ? n["multiplier"].as<double>() : 1.0;
-    }
-    if (cal["offset_ticks"] && cal["offset_ticks"][j.name]) {
-      j.offset_ticks = cal["offset_ticks"][j.name].as<int>();
-    }
+    j.id = item.second["id"].as<int>();
+    if (item.second["slave_id"]) {j.slave_id = item.second["slave_id"].as<int>();}
+    const YAML::Node c = cal["joints"][j.name];
+    if (!c) {throw std::runtime_error("calibration.yaml has no entry for " + j.name);}
+    j.init = c["init"].as<int>();
+    j.min = c["min"].as<int>();
+    j.max = c["max"].as<int>();
+    j.slave_offset = c["slave_calibration_offset"] ? c["slave_calibration_offset"].as<int>() : 0;
     s.joints.push_back(j);
   }
   return s;
 }
 
-/// Read every joint once; false if any read fails (error printed).
-bool read_all(DynamixelBus & bus, const Setup & s, std::vector<uint16_t> & ticks)
+void write_calibration(const Setup & s)
+{
+  std::ofstream out(s.cal_file);
+  out <<
+    "# Handy joint calibration in ivaDynamixel terms (encoder ticks):\n"
+    "#   init  encoder value at joint angle 0\n"
+    "#   min   encoder value at the joint's lower limit   (min > max = joint is flipped)\n"
+    "#   max   encoder value at the joint's upper limit\n"
+    "#   slave_calibration_offset  slave goal = MAX_POSITION - master goal + offset\n"
+    "# GENERATED by `handy calibrate zero|limits` -- re-run instead of hand-editing.\n"
+    "joints:\n";
+  for (const auto & j : s.joints) {
+    out << "  " << j.name << ": {init: " << j.init << ", min: " << j.min << ", max: " << j.max;
+    if (j.slave_id) {out << ", slave_calibration_offset: " << j.slave_offset;}
+    out << "}\n";
+  }
+  std::cout << "Wrote " << s.cal_file << "\nRestart ros2_control to use it. Verify with "
+    "`handy calibrate check`.\n";
+}
+
+/// Present position of every joint (and slave); false if any read fails (error printed).
+bool read_all(dxl::DynamixelIO & io, const Setup & s, std::vector<int> & ticks, std::vector<int> & slave)
 {
   ticks.assign(s.joints.size(), 0);
-  for (size_t i = 0; i < s.joints.size(); ++i) {
-    uint16_t speed = 0;
-    if (!bus.read_position_speed(s.joints[i].id, ticks[i], speed)) {
-      std::cerr << s.joints[i].name << ": " << bus.last_error() << "\n";
-      return false;
+  slave.assign(s.joints.size(), -1);
+  try {
+    for (size_t i = 0; i < s.joints.size(); ++i) {
+      ticks[i] = io.get_position(s.joints[i].id);
+      if (s.joints[i].slave_id) {slave[i] = io.get_position(*s.joints[i].slave_id);}
     }
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << "\n";
+    return false;
   }
   return true;
 }
 
-bool torque_off_all(DynamixelBus & bus, const Setup & s)
+bool torque_off_all(dxl::DynamixelIO & io, const Setup & s)
 {
   if (!confirm("Torque will be DISABLED on all joints -- the arm will go limp. Support it now.")) {
     return false;
   }
-  bool ok = true;
+  std::vector<std::pair<int, bool>> off;
   for (const auto & j : s.joints) {
-    if (!bus.set_torque(j.id, false)) {std::cerr << bus.last_error() << "\n"; ok = false;}
+    off.emplace_back(j.id, false);
+    if (j.slave_id) {off.emplace_back(*j.slave_id, false);}
   }
-  return ok;
+  io.set_multi_torque_enabled(off);
+  return true;
 }
 
 /// Runs `body` repeatedly at `hz` until the user presses Enter.
@@ -145,17 +182,21 @@ void loop_until_enter(double hz, F body)
   input.join();
 }
 
-int cmd_check(DynamixelBus & bus, const Setup & s)
+double joint_rad(const Joint & j, int ticks)
+{
+  return dxl::raw_to_rad(ticks, j.init, j.flipped(), j.motor.radians_per_encoder_tick);
+}
+
+int cmd_check(dxl::DynamixelIO & io, const Setup & s)
 {
   std::cout << "Live joint angles (rad) using " << s.cal_file << "\nPress Enter to stop.\n";
-  std::vector<uint16_t> ticks;
+  std::vector<int> ticks, slave;
   loop_until_enter(5.0, [&] {
-    if (!read_all(bus, s, ticks)) {return;}
+    if (!read_all(io, s, ticks, slave)) {return;}
     std::cout << "\r";
     for (size_t i = 0; i < s.joints.size(); ++i) {
       std::cout << s.joints[i].name.substr(6) << ":" << std::showpos << std::fixed
-                << std::setprecision(2) << ticks_to_rad(s.joints[i], ticks[i]) << std::noshowpos
-                << " ";
+                << std::setprecision(2) << joint_rad(s.joints[i], ticks[i]) << std::noshowpos << " ";
     }
     std::cout << std::flush;
   });
@@ -163,85 +204,93 @@ int cmd_check(DynamixelBus & bus, const Setup & s)
   return 0;
 }
 
-int cmd_zero(DynamixelBus & bus, Setup & s)
+int cmd_zero(dxl::DynamixelIO & io, Setup & s)
 {
   std::cout <<
-    "ZERO CALIBRATION\n"
+    "ZERO CALIBRATION (writes init)\n"
     "Pose the arm in the URDF zero pose (SRDF 'home': all arm joints 0, gripper 'hand_neutral').\n"
     "Compare against RViz with `ros2 launch handy_description display.launch.py` if unsure.\n\n";
-  if (!torque_off_all(bus, s)) {return 1;}
+  if (!torque_off_all(io, s)) {return 1;}
   wait_enter("Hold the arm in the zero pose, then press Enter to sample...");
 
   constexpr int kSamples = 20;
-  std::vector<double> sum(s.joints.size(), 0.0);
-  std::vector<uint16_t> ticks;
+  std::vector<double> sum(s.joints.size(), 0.0), slave_sum(s.joints.size(), 0.0);
+  std::vector<int> ticks, slave;
   for (int k = 0; k < kSamples; ++k) {
-    if (!read_all(bus, s, ticks)) {return 1;}
-    for (size_t i = 0; i < ticks.size(); ++i) {sum[i] += ticks[i];}
+    if (!read_all(io, s, ticks, slave)) {return 1;}
+    for (size_t i = 0; i < ticks.size(); ++i) {
+      sum[i] += ticks[i];
+      slave_sum[i] += slave[i];
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
   }
 
-  std::cout << "\n" << std::left << std::setw(9) << "joint" << std::setw(6) << "id"
-            << std::setw(8) << "ticks" << std::setw(8) << "old" << "new offset_ticks\n";
-  std::map<std::string, int> offsets;
+  std::cout << "\n" << std::left << std::setw(9) << "joint" << std::setw(5) << "id" << std::setw(10)
+            << "model" << std::setw(8) << "old" << "new init\n";
   for (size_t i = 0; i < s.joints.size(); ++i) {
-    const auto & j = s.joints[i];
-    const double mean = sum[i] / kSamples;
-    const int offset = static_cast<int>(std::lround(mean)) - spec(j.model).center_tick;
-    offsets[j.name] = offset;
-    std::cout << std::setw(9) << j.name << std::setw(6) << int(j.id) << std::setw(8)
-              << std::lround(mean) << std::setw(8) << j.offset_ticks << offset
-              << "  (" << std::showpos << std::setprecision(3)
-              << (offset - j.offset_ticks) * spec(j.model).rad_per_tick() << std::noshowpos
-              << " rad change)\n";
+    auto & j = s.joints[i];
+    const int new_init = static_cast<int>(std::lround(sum[i] / kSamples));
+    std::cout << std::setw(9) << j.name << std::setw(5) << j.id << std::setw(10)
+              << j.motor.model_name << std::setw(8) << j.init << new_init << "  (" << std::showpos
+              << std::setprecision(3) << (new_init - j.init) * j.motor.radians_per_encoder_tick
+              << std::noshowpos << " rad change)";
+    // shift min/max with the zero so the joint keeps the same range in radians
+    const int shift = new_init - j.init;
+    j.min += shift;
+    j.max += shift;
+    j.init = new_init;
+    if (j.slave_id) {
+      // slave goal = MAX_POSITION - master goal + offset  ->  offset at the zero pose
+      const int max_position = j.motor.encoder_resolution - 1;
+      j.slave_offset = static_cast<int>(std::lround(slave_sum[i] / kSamples)) - (max_position - new_init);
+      std::cout << "  slave " << *j.slave_id << " offset " << j.slave_offset;
+    }
+    std::cout << "\n";
   }
-  if (!confirm("\nWrite these offsets to " + s.cal_file.string() + "?")) {return 1;}
-
-  std::ofstream out(s.cal_file);
-  out << "# Joint zero offsets in servo ticks: ticks_at_zero = model_center_tick + offset_ticks.\n"
-         "# GENERATED by `ros2 run handy_calibrate handy_calibrate zero` -- re-run instead of "
-         "hand-editing.\n"
-         "offset_ticks:\n";
-  for (const auto & j : s.joints) {out << "  " << j.name << ": " << offsets[j.name] << "\n";}
-  std::cout << "Wrote " << s.cal_file << "\nRestart ros2_control to use it. Verify with "
-               "`handy_calibrate check`.\n";
+  if (!confirm("\nWrite these to " + s.cal_file.string() + "?")) {return 1;}
+  write_calibration(s);
   return 0;
 }
 
-int cmd_limits(DynamixelBus & bus, const Setup & s, const std::string & out_file)
+int cmd_limits(dxl::DynamixelIO & io, Setup & s)
 {
   std::cout <<
-    "LIMIT MEASUREMENT (uses the current zero calibration)\n"
+    "LIMIT MEASUREMENT (writes min/max, keeps init)\n"
     "Move each joint slowly to BOTH mechanical/cable limits by hand. Press Enter when done.\n\n";
-  if (!torque_off_all(bus, s)) {return 1;}
+  if (!torque_off_all(io, s)) {return 1;}
 
-  std::vector<double> lo(s.joints.size(), std::numeric_limits<double>::infinity());
-  std::vector<double> hi(s.joints.size(), -std::numeric_limits<double>::infinity());
-  std::vector<uint16_t> ticks;
+  std::vector<int> lo(s.joints.size(), std::numeric_limits<int>::max());
+  std::vector<int> hi(s.joints.size(), std::numeric_limits<int>::min());
+  std::vector<int> ticks, slave;
   loop_until_enter(20.0, [&] {
-    if (!read_all(bus, s, ticks)) {return;}
+    if (!read_all(io, s, ticks, slave)) {return;}
     std::cout << "\r";
     for (size_t i = 0; i < s.joints.size(); ++i) {
-      const double r = ticks_to_rad(s.joints[i], ticks[i]);
-      lo[i] = std::min(lo[i], r);
-      hi[i] = std::max(hi[i], r);
+      lo[i] = std::min(lo[i], ticks[i]);
+      hi[i] = std::max(hi[i], ticks[i]);
+      const double a = joint_rad(s.joints[i], lo[i]), b = joint_rad(s.joints[i], hi[i]);
       std::cout << s.joints[i].name.substr(6) << "[" << std::fixed << std::setprecision(2)
-                << lo[i] << "," << hi[i] << "] ";
+                << std::min(a, b) << "," << std::max(a, b) << "] ";
     }
     std::cout << std::flush;
   });
 
-  std::ofstream out(out_file);
-  out << "# Measured joint ranges (rad), from `handy_calibrate limits` with calibration\n"
-         "# " << s.cal_file.string() << "\n"
-         "# Compare with handy_moveit_config/config/joint_limits.yaml and copy over by hand,\n"
-         "# leaving a safety margin. Not used by anything automatically.\n"
-         "measured_limits:\n";
+  std::cout << "\n\n";
   for (size_t i = 0; i < s.joints.size(); ++i) {
-    out << "  " << s.joints[i].name << ": {min_position: " << std::setprecision(3) << lo[i]
-        << ", max_position: " << hi[i] << "}\n";
+    auto & j = s.joints[i];
+    // keep the joint's orientation: flipped joints store min > max
+    const int new_min = j.flipped() ? hi[i] : lo[i];
+    const int new_max = j.flipped() ? lo[i] : hi[i];
+    std::cout << std::left << std::setw(9) << j.name << "min " << j.min << " -> " << new_min
+              << ", max " << j.max << " -> " << new_max << "  ([" << std::fixed << std::setprecision(2)
+              << joint_rad(j, new_min) << ", " << joint_rad(j, new_max) << "] rad)\n";
+    j.min = new_min;
+    j.max = new_max;
   }
-  std::cout << "\nWrote " << out_file << "\n";
+  std::cout << "\nThese become the hardware command limits. MoveIt keeps its own limits in\n"
+    "handy_moveit_config/config/joint_limits.yaml (update those by hand, with margin).\n";
+  if (!confirm("Write min/max to " + s.cal_file.string() + "?")) {return 1;}
+  write_calibration(s);
   return 0;
 }
 
@@ -249,14 +298,13 @@ int cmd_limits(DynamixelBus & bus, const Setup & s, const std::string & out_file
 
 int main(int argc, char ** argv)
 {
-  std::string port, cal, out = "handy_limits_measured.yaml", cmd;
+  std::string port, cal, cmd;
   int baud = 0;
   for (int i = 1; i < argc; ++i) {
     const std::string a = argv[i];
     if (a == "--port" && i + 1 < argc) {port = argv[++i];}
     else if (a == "--baud" && i + 1 < argc) {baud = std::atoi(argv[++i]);}
     else if (a == "--cal" && i + 1 < argc) {cal = argv[++i];}
-    else if (a == "--out" && i + 1 < argc) {out = argv[++i];}
     else if (cmd.empty()) {cmd = a;}
     else {return usage();}
   }
@@ -272,12 +320,17 @@ int main(int argc, char ** argv)
   if (!port.empty()) {s.port = port;}
   if (baud > 0) {s.baud = baud;}
 
-  DynamixelBus bus;
-  if (!bus.open(s.port, s.baud)) {
-    std::cerr << bus.last_error() << "\n(is ros2_control still running? try `handy kill`)\n";
+  std::unique_ptr<dxl::DynamixelIO> io;
+  try {
+    io = std::make_unique<dxl::DynamixelIO>(s.port, s.baud);
+    for (auto & j : s.joints) {
+      j.motor = dxl::fill_motor_parameters(*io, j.id, io->get_model_number(j.id));
+    }
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << "\n(is ros2_control still running? try `handy kill`)\n";
     return 1;
   }
-  if (cmd == "check") {return cmd_check(bus, s);}
-  if (cmd == "zero") {return cmd_zero(bus, s);}
-  return cmd_limits(bus, s, out);
+  if (cmd == "check") {return cmd_check(*io, s);}
+  if (cmd == "zero") {return cmd_zero(*io, s);}
+  return cmd_limits(*io, s);
 }

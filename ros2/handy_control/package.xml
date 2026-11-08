@@ -10,7 +10,8 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <exec_depend>handy_description</exec_depend>
-  <exec_depend>handy_hardware</exec_depend>
+  <exec_depend>iva_dynamixel_hardware</exec_depend>
+  <exec_depend>iva_dynamixel_tools</exec_depend>
   <exec_depend>controller_manager</exec_depend>
   <exec_depend>joint_state_broadcaster</exec_depend>
   <exec_depend>joint_trajectory_controller</exec_depend>
