@@ -36,3 +36,9 @@ def test_test_limits_variant():
     assert test_cfg.joint_limits['joint_1'] == (-0.3, 0.3)
     with pytest.raises(ValueError):
         config.load_handy_config('wide')
+
+
+def test_pattern_joints_are_arm_joints(cfg):
+    for name in ('snake', 'roll', 'nod'):
+        assert set(cfg.pattern_joints[name]) <= set(cfg.arm_joints)
+    assert cfg.pattern_start_pose in cfg.named_poses

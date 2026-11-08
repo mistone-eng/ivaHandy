@@ -15,7 +15,7 @@ Parts: h.state (joints, end-effector pose, Servo status), h.tf (frame transforms
 from typing import Optional, Union
 
 from handy_api import patterns as pattern_lib
-from handy_api.config import RobotConfig, load_handy_config
+from handy_api.config import RobotConfig
 from handy_api.controllers import Modes
 from handy_api.gripper import Gripper
 from handy_api.motion import Planner
@@ -28,9 +28,13 @@ from handy_api.transforms import Transforms
 class Handy:
     def __init__(self, config: Optional[RobotConfig] = None, limits: str = 'full',
                  node_name: str = 'handy_api', connect: bool = True, timeout: float = 15.0):
-        """config: a RobotConfig (default: Handy's, with `limits` 'full' or 'test' matching the
-        running stack). connect: wait for joint states and Servo, and switch to servo mode."""
-        self.config = config or load_handy_config(limits)
+        """config: any RobotConfig. Default: Handy's, loaded with `limits` ('full' or 'test',
+        matching the running stack); only then is Handy's loader imported, so other robots just
+        pass their own config. connect: wait for joint states and Servo, switch to servo mode."""
+        if config is None:
+            from handy_api.config import load_handy_config
+            config = load_handy_config(limits)
+        self.config = config
         self._hn = HandyNode(node_name)
         self.state = State(self._hn, self.config)
         self.tf = Transforms(self.state.tf_buffer, self.config)
@@ -38,7 +42,10 @@ class Handy:
         self.servo = ServoClient(self._hn, self.config, self.state)
         self.motion = Planner(self._hn, self.config, self.modes)
         self.gripper = Gripper(self._hn, self.config)
-        self.patterns = pattern_lib.builtin(self.config.hand_positions)
+        self.patterns = (pattern_lib.builtin(self.config.hand_positions,
+                                             self.config.pattern_joints,
+                                             self.config.pattern_start_pose)
+                         if self.config.pattern_joints else {})
         if connect:
             self.connect(timeout)
 

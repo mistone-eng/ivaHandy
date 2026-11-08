@@ -10,7 +10,7 @@ travel further.
 """
 import math
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 TWO_PI = 2.0 * math.pi
 RAMP = 1.0  # s
@@ -35,7 +35,7 @@ class Pattern:
     kind: str                                   # 'twist' or 'joint'
     fn: Callable[[float], object]               # t -> Twist or {joint: v}, unitless
     description: str = ''
-    start_pose: Optional[str] = 'wave'          # named pose to start from (None = current)
+    start_pose: Optional[str] = None            # named pose to start from (None = current)
     gripper: List[Tuple[float, float]] = field(default_factory=list)  # (t, position) waypoints
 
     def __post_init__(self):
@@ -75,28 +75,28 @@ class Pattern:
         return dict(zip(self._keys, flat))
 
 
-def figure8(period: float = 8.0, cycles: int = 2) -> Pattern:
+def figure8(period: float = 8.0, cycles: int = 2, start_pose: Optional[str] = None) -> Pattern:
     w = TWO_PI / period
     return Pattern('figure8', period * cycles, 'twist',
                    lambda t: ((0.0, math.cos(w * t), math.cos(2 * w * t)), (0.0, 0.0, 0.0)),
-                   'Lissajous figure-8 in the Y/Z plane')
+                   'Lissajous figure-8 in the Y/Z plane', start_pose)
 
 
-def helix(period: float = 6.0, cycles: int = 3) -> Pattern:
+def helix(period: float = 6.0, cycles: int = 3, start_pose: Optional[str] = None) -> Pattern:
     w = TWO_PI / period
     wx = w / cycles  # one in-and-out drift over the whole helix
     return Pattern('helix', period * cycles, 'twist',
                    lambda t: ((0.4 * math.cos(wx * t), math.cos(w * t), -math.sin(w * t)),
                               (0.0, 0.0, 0.0)),
-                   'circles in Y/Z, drifting along X')
+                   'circles in Y/Z, drifting along X', start_pose)
 
 
-def snake(joints=('joint_4', 'joint_5', 'joint_6', 'joint_7'), period: float = 8.0,
-          cycles: int = 2, phase: float = math.pi / 3) -> Pattern:
+def snake(joints: Sequence[str], period: float = 8.0, cycles: int = 2,
+          phase: float = math.pi / 3, start_pose: Optional[str] = None) -> Pattern:
     w = TWO_PI / period
     return Pattern('snake', period * cycles, 'joint',
                    lambda t: {j: math.cos(w * t - i * phase) for i, j in enumerate(joints)},
-                   'a wave travelling down the joints')
+                   'a wave travelling down the joints', start_pose)
 
 
 def breathing(open_pos: float, close_pos: float, duration: float, cycles: int = 3,
@@ -110,12 +110,13 @@ def breathing(open_pos: float, close_pos: float, duration: float, cycles: int = 
     return points
 
 
-def hello(hand: Dict[str, float], period: float = 6.0, cycles: int = 2) -> Pattern:
+def hello(hand: Dict[str, float], roll: str, nod: str, period: float = 6.0, cycles: int = 2,
+          start_pose: Optional[str] = None) -> Pattern:
     w = TWO_PI / period
     duration = period * cycles
     return Pattern('hello', duration, 'joint',
-                   lambda t: {'joint_7': math.cos(w * t), 'joint_6': 0.5 * math.cos(0.5 * w * t)},
-                   'wrist roll wave + nod, gripper breathing',
+                   lambda t: {roll: math.cos(w * t), nod: 0.5 * math.cos(0.5 * w * t)},
+                   'wrist roll wave + nod, gripper breathing', start_pose,
                    gripper=breathing(hand['open'], hand['close'], duration, 3, hand['neutral']))
 
 
@@ -125,5 +126,13 @@ def custom(name: str, duration: float, kind: str, fn, start_pose: Optional[str] 
     return Pattern(name, duration, kind, fn, description, start_pose)
 
 
-def builtin(hand: Dict[str, float]) -> Dict[str, Pattern]:
-    return {'figure8': figure8(), 'helix': helix(), 'snake': snake(), 'hello': hello(hand)}
+def builtin(hand: Dict[str, float], joints: Dict[str, Sequence[str]],
+            start_pose: Optional[str] = None) -> Dict[str, Pattern]:
+    """The built-in patterns for a robot: joints = {'snake': [...], 'roll': [j], 'nod': [j]}
+    (RobotConfig.pattern_joints), hand = RobotConfig.hand_positions."""
+    return {
+        'figure8': figure8(start_pose=start_pose),
+        'helix': helix(start_pose=start_pose),
+        'snake': snake(joints['snake'], start_pose=start_pose),
+        'hello': hello(hand, joints['roll'][0], joints['nod'][0], start_pose=start_pose),
+    }

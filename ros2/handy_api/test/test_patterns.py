@@ -6,6 +6,12 @@ import pytest
 from handy_api import patterns
 
 HAND = {'open': -0.514, 'close': 0.125, 'neutral': 0.0}
+JOINTS = {'snake': ('joint_4', 'joint_5', 'joint_6', 'joint_7'),
+          'roll': ('joint_7',), 'nod': ('joint_6',)}
+
+
+def _builtin(start_pose='wave'):
+    return patterns.builtin(HAND, JOINTS, start_pose)
 
 
 def _flat(p, v):
@@ -25,7 +31,7 @@ def _integrate(p, dt=0.001):
 
 @pytest.mark.parametrize('name', ['figure8', 'helix', 'snake', 'hello'])
 def test_builtin_patterns_return_to_start(name):
-    p = patterns.builtin(HAND)[name]
+    p = _builtin()[name]
     disp = _integrate(p)
     # drift-corrected: the arm ends where it started (vs. ~0.95 before the correction)
     assert max(abs(x) for x in disp) < 0.01, disp
@@ -33,7 +39,7 @@ def test_builtin_patterns_return_to_start(name):
 
 @pytest.mark.parametrize('name', ['figure8', 'helix', 'snake', 'hello'])
 def test_correction_keeps_most_of_the_motion(name):
-    p = patterns.builtin(HAND)[name]
+    p = _builtin()[name]
     steps = range(int(p.duration * 20))
     peak = max(max(abs(x) for x in _flat(p, p.sample(k / 20))) for k in steps)
     assert 0.85 < peak <= 1.0
@@ -41,7 +47,7 @@ def test_correction_keeps_most_of_the_motion(name):
 
 @pytest.mark.parametrize('name', ['figure8', 'helix', 'snake', 'hello'])
 def test_commands_are_unitless_and_ramped(name):
-    p = patterns.builtin(HAND)[name]
+    p = _builtin()[name]
     for k in range(0, int(p.duration * 20) + 1):
         v = p.sample(k / 20)
         flat = list(v[0]) + list(v[1]) if p.kind == 'twist' else list(v.values())
@@ -59,7 +65,7 @@ def test_envelope_shape():
 
 
 def test_hello_gripper_waypoints_stay_in_range_and_end_neutral():
-    p = patterns.builtin(HAND)['hello']
+    p = _builtin()['hello']
     times = [t for t, _ in p.gripper]
     assert times == sorted(times)
     assert all(HAND['open'] - 1e-9 <= x <= HAND['close'] + 1e-9 for _, x in p.gripper)
@@ -71,3 +77,13 @@ def test_custom_pattern_and_kind_validation():
     assert p.start_pose is None and set(p.sample(2.0)) == {'joint_7'}
     with pytest.raises(ValueError):
         patterns.custom('bad', 1.0, 'teleport', lambda t: None)
+
+
+def test_builtin_patterns_are_robot_agnostic():
+    """Joint names and the start pose come from the caller (RobotConfig), not from patterns.py."""
+    other = {'snake': ('a1', 'a2', 'a3'), 'roll': ('w_roll',), 'nod': ('w_pitch',)}
+    built = patterns.builtin(HAND, other, start_pose='home')
+    assert set(built['snake'].sample(1.0)) == {'a1', 'a2', 'a3'}
+    assert set(built['hello'].sample(1.0)) == {'w_roll', 'w_pitch'}
+    assert all(p.start_pose == 'home' for p in built.values())
+    assert patterns.figure8().start_pose is None

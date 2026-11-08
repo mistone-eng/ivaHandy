@@ -54,6 +54,9 @@ class RobotConfig:
     workspace: Optional[Workspace] = None
     command_timeout: float = 0.5   # s: a velocity command not refreshed for this long is dropped
     status_names: Dict[int, str] = field(default_factory=lambda: dict(poses.SERVO_STATUS))
+    # built-in patterns: which joints they use and the named pose they start from
+    pattern_joints: Dict[str, Tuple[str, ...]] = field(default_factory=dict)  # snake/roll/nod
+    pattern_start_pose: Optional[str] = None
 
 
 def _share(package):
@@ -95,4 +98,7 @@ def load_handy_config(limits: str = 'full', workspace: Optional[Workspace] = Non
         servo_scale_rotational=rot,
         servo_scale_joint=jnt,
         workspace=workspace,
+        pattern_joints={'snake': ('joint_4', 'joint_5', 'joint_6', 'joint_7'),
+                        'roll': ('joint_7',), 'nod': ('joint_6',)},
+        pattern_start_pose='wave',
     )
